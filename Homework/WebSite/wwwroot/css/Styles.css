@@ -1,0 +1,92 @@
+﻿body {
+    background-color: rgb(240, 240, 245);
+}
+
+table {
+    margin-bottom: 30px;
+    background-color: white;
+    border-collapse: collapse;
+}
+
+td, th {
+    border-top: 1px solid grey;
+    border-bottom: 1px solid gray;
+    border-right: 10px solid rgb(240, 240, 245);
+    border-left: 10px solid rgb(240, 240, 245);
+    vertical-align: top;
+}
+
+#siteInfo {
+    color: blue;
+    text-align: center;
+    margin-top: 0px;
+}
+
+#content {
+    display: none;
+}
+.fileModifiedTime {
+    text-align: center;
+}
+
+.attention {
+    color: red;
+}
+
+.announcement {
+    text-align: center;
+}
+
+.green {
+    color: yellowgreen;
+    font-size: 36px;
+}
+
+.dayWeek {
+    color: #1d1d1b;
+    font-size: 24px;
+    font-style: normal;
+    font-stretch: normal;
+    font-weight: 700;
+    line-height: normal;
+    font-family: NotoSerif-Bold,serif;
+}
+
+.date {
+    font-family: Roboto,sans-serif;
+    color: #1d1d1b;
+    font-size: 14px;
+    font-style: normal;
+    font-stretch: normal;
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.subject {
+    color: brown;
+    font-size: 18px;
+    font-style: normal;
+    font-stretch: normal;
+    font-weight: 400;
+    line-height: normal;
+    font-family: Roboto-bold,sans-serif;
+}
+.lesson_content {
+    font-family: Roboto,sans-serif;
+    color: #7d7e86;
+    font-size: 14px;
+    font-style: normal;
+    font-stretch: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.homework {
+    font-family: Roboto,sans-serif;
+    color: #7d7e86;
+    font-size: 14px;
+    font-style: normal;
+    font-stretch: normal;
+    font-weight: 600;
+    line-height: normal;
+}

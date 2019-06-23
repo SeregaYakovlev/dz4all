@@ -1,0 +1,197 @@
+﻿@page
+@model IndexModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta name="viewport" content="width=device-width" innitial-scale="0.1" maximum-scale="1" />
+    <title>Homework</title>
+    <link rel="stylesheet" href="~/css/Styles.css" />
+    <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
+    <script src="https://vk.com/js/api/openapi.js?160" type="text/javascript"></script>
+    <script src="~/js/JavaScript.js"></script>
+</head>
+<body>
+    <!-- #region Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function (m, e, t, r, i, k, a) {
+            m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
+            m[i].l = 1 * new Date(); k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+        })
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+        ym(53635789, "init", {
+            clickmap: true,
+            trackLinks: true,
+            accurateTrackBounce: true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/53635789" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- #endregion Yandex.Metrika counter -->
+    <header>
+        <h1 id="siteInfo">
+            Домашние задания 8 "Б" класса
+            <br />
+            Гимназии №343
+        </h1>
+    </header>
+    <noscript>
+        <p class="announcement">
+            <strong class="attention">Внимание!</strong>
+            <br />
+            У вас в браузере отключен JavaScript.
+            <br />
+            Он требуется для работы сайта.
+            <br />
+            Нужно включить JavaScript в настроках браузера, или скачать современный браузер.
+        </p>
+    </noscript>
+    <script type="text/javascript">
+        VK.init({
+            apiId: 6976164
+        });
+    </script>
+    <div id="vkAutorizer"></div>
+    <script type="text/javascript">
+        window.onload = function () {
+            VK.Widgets.Auth('vkAutorizer', {
+                "onAuth": function (data) {
+                    show();
+                    DeleteCookie("user");
+                    SetCookie("user", data.first_name + ' ' + data.last_name + ' ' + data.uid, 30);
+                    alert("Вы авторизовались успешно!");
+                    SendToServer();
+                }
+            });
+        }
+
+    </script>
+    <p id="infoVkAutorization">
+        Чтобы просмотреть домашние задания, нужно авторизоваться в контакте.
+        <br />
+        При нажатии кнопки вы будете переадресованы на вконтакт,
+        <br />
+        затем обратно на сайт.
+    </p>
+    <div id="content">
+        @using System.IO;
+        @using Newtonsoft.Json.Linq;
+        @{
+            string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
+            var files = Directory.GetFiles(pathToDataDirectory);
+            if (files.Count() == 0)
+            {
+                <p class="announcement">
+                    <strong class="attention">ВНИМАНИЕ!</strong>
+                    <br />
+                    Данных нет.
+                    <br />
+                    Но это <strong class="attention">совсем не означает,</strong> что домашки нет.
+                    <br />
+                    Возможно, просто потерялись данные.
+                </p>
+            }
+            else
+            {
+                <form>
+                    <input type="checkbox" id="ShowLessonContent" />Показывать контент уроков<br />
+                </form>
+                var thisWeek = System.IO.File.GetLastWriteTime(files[0]);
+                <p class="fileModifiedTime">Эта неделя обновлена @thisWeek</p>
+
+                if (files.Count() > 1) // Если других файлов нет, то будет exception
+                {
+                    var otherWeeks = System.IO.File.GetLastWriteTime(files[1]);
+                    <p class="fileModifiedTime">Остальные @otherWeeks</p>
+                }
+
+                <!--#region create_table-->
+                int dzCount = 0;
+                foreach (var file in files)
+                {
+                    @Html.Raw("<table>");
+                    string readedFile;
+                    using (var reader = new StreamReader(file))
+                    {
+                        readedFile = reader.ReadToEnd();
+                    }
+                    // Начинаем парсить json
+                    var json = JObject.Parse(readedFile);
+                    var items = json["data"]["items"].AsEnumerable();
+                    items = items.OrderBy(number => number["number"]);
+                    // Группировка по дням недели
+                    var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
+                    /* Упорядоченная группировка по дням недели,
+                     * то есть сначала понедельник, затем вторник, среда и т. д. */
+                    var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
+                    // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
+
+                    @Html.Raw("<tr>");
+                    foreach (var weekDayItems in itemsGroupedByWeeksDay)
+                    {
+                        var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                        <th>
+                            <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
+                            <br />
+                            <span class="date">@date.ToString("dd.MM")</span>
+                        </th>
+                    }
+                    @Html.Raw("</tr>");
+
+                    // k - количество пройденных строк
+                    int k = 0;
+                    // rowCount - максимальное кол-во строк. Вычисляется по самому большому кол-ву уроков
+                    // в какой либо день.
+                    var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
+                    while (rowCount > k)
+                    {
+                        @Html.Raw("<tr>"); // Одна строка на всю неделю
+
+                        // Берем уроки в определенный день из уроков, сгруппированных по дням недели.
+                        // foreach пишет их построчно(понедельник урок, вторник урок, среда урок и т. д.)
+                        foreach (var weekDayItems in itemsGroupedByWeeksDay)
+                        {
+
+                            var item = weekDayItems.Skip(k).FirstOrDefault();
+                            @Html.Raw("<td>"); // Одна ячейка на один урок
+                              //Console.Write(item);
+                            if (item != null)
+                            {
+                                var subject = item["subject_name"].ToString();
+                                var lesson_content = item["content_name"].ToString();
+                                var tasks = item["tasks"];
+                                // Пишем домашку у уроков.
+                                // foreach нужен, вдруг будет несколько дз!!! у одного и того же предмета
+                                <span class="subject">@subject:</span>
+                                <br />
+                                <span class="lesson_content">@lesson_content</span>
+                                foreach (var task in tasks)
+                                {
+                                    var homework = task["task_name"].ToString();
+                                    <br class="br" />
+                                    <span class="homework">Дз: @homework</span>
+                                    dzCount++;
+                                }
+                            }
+                            @Html.Raw("</td>");
+                        }
+                        @Html.Raw("</tr>");
+                        k++;
+                    }
+                    @Html.Raw("</table>");
+                }
+                <!--#endregion-->
+                if (dzCount == 0)
+                {
+                    <p class="announcement green">
+                        Электронный дневник пустой!
+                    </p>
+                }
+            }
+        }
+    </div>
+</body>
+</html>
