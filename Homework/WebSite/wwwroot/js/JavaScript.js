@@ -1,12 +1,16 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
+    url();
     checkCookie();
     checkbox();
     root();
+    hideEmptyTables();
 })
+
 function show() {
     document.getElementById("content").style.display = "inline";
     document.getElementById("vkAutorizer").style.display = "none";
     document.getElementById("infoVkAutorization").style.display = "none";
+    SendToServer();
 }
 
 function SetCookie(name, value, expires) {
@@ -65,7 +69,7 @@ function checkCookie() {
 function SendToServer() {
     // Post-запрос серверу при авторизации, он идет вместе с файлами Cookies.
     var xhr = new XMLHttpRequest();
-    var url = "http://94.188.19.60";
+    var url = "http://localhost:5000/";
     xhr.open("POST", url, true);
     xhr.send();
 }
@@ -82,11 +86,16 @@ function lessonContent(param) {
         br[k].style.display = param;
     }
 
-    if (param === "inline") {
-        checkbox.checked = true;
+    try {
+        if (param === "inline") {
+            checkbox.checked = true;
+        }
+        else {
+            checkbox.checked = false;
+        }
     }
-    else {
-        checkbox.checked = false;
+    catch (e) {
+        console.error("CONSOLE ERROR " + e);
     }
 }
 
@@ -98,19 +107,23 @@ function checkbox() {
     else if (checkboxValue === "off") {
         lessonContent("none");
     }
-
-    document.getElementById("ShowLessonContent").onchange = function () {
-        var checked = this.checked;
-        if (checked === true) {
-            lessonContent("inline");
-            DeleteCookie("checkbox");
-            SetCookie("checkbox", "on", 30);
+    try {
+        document.getElementById("ShowLessonContent").onchange = function () {
+            var checked = this.checked;
+            if (checked === true) {
+                lessonContent("inline");
+                DeleteCookie("checkbox");
+                SetCookie("checkbox", "on", 30);
+            }
+            else {
+                lessonContent("none");
+                DeleteCookie("checkbox");
+                SetCookie("checkbox", "off", 30);
+            }
         }
-        else {
-            lessonContent("none");
-            DeleteCookie("checkbox");
-            SetCookie("checkbox", "off", 30);
-        }
+    }
+    catch (e) {
+        console.error("CONSOLE ERROR " + e);
     }
 }
 
@@ -122,5 +135,19 @@ function root() {
             alert("That computer is allowed in root");
         }
     }
-    return;
+}
+
+function url() {
+    var url = window.location.href;
+    DeleteCookie("url");
+    SetCookie("url", url, 30);
+}
+
+function hideEmptyTables() {
+    var table = document.getElementsByTagName("table");
+    for (var i = 0; i < table.length; i++) {
+        if (table[i].innerHTML === "<tbody><tr></tr></tbody>") {
+            table[i].style.display = "none";
+        }
+    }
 }

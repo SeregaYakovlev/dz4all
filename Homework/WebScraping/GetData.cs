@@ -55,7 +55,7 @@ namespace WebScraping
              * в зависимости от размера браузера.
              * В headless-режиме окно маленького размера. */
 
-            using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true, DefaultViewport = null }))
+            using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = false, DefaultViewport = null }))
             {   // Подписка на события для отладки
                 /*
                 browser.Closed += Browser_Closed;
@@ -136,7 +136,7 @@ namespace WebScraping
                         WaitUntil = new[] {
                         WaitUntilNavigation.Networkidle0
                     },
-                        Timeout = 10000
+                        Timeout = 60000
                     });
                 }
                 catch (TimeoutException)
@@ -189,7 +189,10 @@ namespace WebScraping
                         last = last.AddDays(-7);
                         next = next.AddDays(-7);
                     }
-                    string link = $"/api/journal/lesson/list-by-education?p_limit=100&p_page=1&p_datetime_from={last}&p_datetime_to={next}&p_groups%5B%5D=5881&p_educations%5B%5D=15622";
+                    string lastStr = last.ToString("dd.MM.yyyy");
+                    string nextStr = next.ToString("dd.MM.yyyy");
+
+                    string link = $"/api/journal/lesson/list-by-education?p_limit=100&p_page=1&p_datetime_from={lastStr}&p_datetime_to={nextStr}&p_groups%5B%5D=5881&p_educations%5B%5D=15622";
 
                     var baseAddress = new Uri("https://dnevnik2.petersburgedu.ru");
                     var cookieContainer = new CookieContainer();

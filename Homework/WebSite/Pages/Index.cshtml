@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    
+
     <meta name="viewport" content="width=device-width" innitial-scale="0.1" maximum-scale="1" />
     <title>Homework</title>
     <link rel="stylesheet" href="~/css/Styles.css" />
@@ -15,7 +15,7 @@
     <script src="~/js/JavaScript.js"></script>
 </head>
 <body>
-    <!-- #region Yandex.Metrika counter -->
+    <!--#region Yandex.Metrika counter-->
     <script type="text/javascript">
         (function (m, e, t, r, i, k, a) {
             m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
@@ -30,7 +30,7 @@
         });
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/53635789" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- #endregion Yandex.Metrika counter -->
+    <!--#endregion-->
     <header>
         <h1 id="siteInfo">
             Домашние задания 8 "Б" класса
@@ -63,7 +63,6 @@
                     DeleteCookie("user");
                     SetCookie("user", data.first_name + ' ' + data.last_name + ' ' + data.uid, 30);
                     alert("Вы авторизовались успешно!");
-                    SendToServer();
                 }
             });
         }
@@ -77,6 +76,9 @@
         затем обратно на сайт.
     </p>
     <div id="content">
+        <form>
+            <input type="checkbox" id="ShowLessonContent" />Показывать контент уроков<br />
+        </form>
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @{
@@ -96,20 +98,16 @@
             }
             else
             {
-                <form>
-                    <input type="checkbox" id="ShowLessonContent" />Показывать контент уроков<br />
-                </form>
-                var thisWeek = System.IO.File.GetLastWriteTime(files[0]);
+                string thisWeek = System.IO.File.GetLastWriteTime(files[0]).ToString("dd.MM.yyyy HH:mm:ss");
                 <p class="fileModifiedTime">Эта неделя обновлена @thisWeek</p>
 
                 if (files.Count() > 1) // Если других файлов нет, то будет exception
                 {
-                    var otherWeeks = System.IO.File.GetLastWriteTime(files[1]);
+                    string otherWeeks = System.IO.File.GetLastWriteTime(files[1]).ToString("dd.MM.yyyy HH:mm:ss");
                     <p class="fileModifiedTime">Остальные @otherWeeks</p>
                 }
-
-                <!--#region create_table-->
-                int dzCount = 0;
+                <!-- #region create table-->
+                int tdCount = 0;
                 foreach (var file in files)
                 {
                     @Html.Raw("<table>");
@@ -121,7 +119,7 @@
                     // Начинаем парсить json
                     var json = JObject.Parse(readedFile);
                     var items = json["data"]["items"].AsEnumerable();
-                    items = items.OrderBy(number => number["number"]);
+                    items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
                     // Группировка по дням недели
                     var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
                     /* Упорядоченная группировка по дням недели,
@@ -173,8 +171,8 @@
                                     var homework = task["task_name"].ToString();
                                     <br class="br" />
                                     <span class="homework">Дз: @homework</span>
-                                    dzCount++;
                                 }
+                                tdCount++;
                             }
                             @Html.Raw("</td>");
                         }
@@ -184,10 +182,19 @@
                     @Html.Raw("</table>");
                 }
                 <!--#endregion-->
-                if (dzCount == 0)
+                if (tdCount == 0)
                 {
                     <p class="announcement green">
-                        Электронный дневник пустой!
+                        @{
+                            List<System.DateTime> timeUpdateFiles = new List<System.DateTime>();
+                            for (int i = 0; i < files.Count(); i++)
+                            {
+                                var updateTime = System.IO.File.GetLastWriteTime(files[i]);
+                                timeUpdateFiles.Add(updateTime);
+                            }
+                            var maxTime = timeUpdateFiles.Max().ToString("dd.MM.yyyy HH:mm:ss");
+                        }
+                        Электронный дневник пустой с @maxTime!
                     </p>
                 }
             }

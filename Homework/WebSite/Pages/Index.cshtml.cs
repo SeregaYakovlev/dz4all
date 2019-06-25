@@ -14,30 +14,25 @@ namespace WebSite.Pages
     {
         public void OnGet()
         {
-            var user = Request.Cookies["user"];
-            if (user != null)
-            {
-                CookieWriter(user);
-            }
+      
         }
         public void OnPost()
         {
             var user = Request.Cookies["user"];
-            if (user != null)
-            {
-                CookieWriter(user);
-            }
+            var url = Request.Cookies["url"];
+            if (user == null) user = "null";
+            CookieWriter(user, url);
         }
-        private static void CookieWriter(string user)
+        private static void CookieWriter(string user, string url)
         {
             string pathToVisits = @"C:\Users\Serega\Desktop\Publish\HomeworkVisits";
 
-            var currentTime = DateTime.Now.ToString();
+            var currentTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
             string fileName = $"Visits.txt";
             var path = Path.Combine(pathToVisits, fileName);
             var file = new FileInfo(path);
             System.IO.File.AppendAllText(file.FullName, currentTime + " "
-                + user + ";" + Environment.NewLine + Environment.NewLine
+                + user + " " + "url: " + url + Environment.NewLine + Environment.NewLine
                 );
         }
     }
