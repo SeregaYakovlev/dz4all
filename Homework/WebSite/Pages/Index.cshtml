@@ -39,15 +39,18 @@
         </h1>
     </header>
     <noscript>
-        <p class="announcement">
-            <strong class="attention">Внимание!</strong>
-            <br />
-            У вас в браузере отключен JavaScript.
-            <br />
-            Он требуется для работы сайта.
-            <br />
-            Нужно включить JavaScript в настроках браузера, или скачать современный браузер.
-        </p>
+        <div class="announcement">
+            <p>
+                <strong class="attention">Внимание!</strong>
+                <br />
+                Для работы требуются:
+                <br />
+                1) JavaScript (он у вас отключён)
+                <br />
+                2) Файлы cookies(желательно)
+                <br />
+                3) Никаких Internet Explorer'ов и других допотопных браузеров
+        </div>
     </noscript>
     <script type="text/javascript">
         VK.init({
@@ -120,6 +123,11 @@
                     var json = JObject.Parse(readedFile);
                     var items = json["data"]["items"].AsEnumerable();
                     items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
+                    /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
+                     * а потом без домашки.
+                     * OrderBy - сортировка по возрастанию, то есть номера уроков по возрастанию
+                     */
+
                     // Группировка по дням недели
                     var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
                     /* Упорядоченная группировка по дням недели,

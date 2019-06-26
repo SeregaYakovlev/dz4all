@@ -1,10 +1,23 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
-    url();
+    host();
+    ifCookiesEnabled();
     checkCookie();
     checkbox();
     root();
     hideEmptyTables();
 })
+
+function ifCookiesEnabled() {
+    console.log("ifCookiesEnabled");
+    var cookiesEnabled = navigator.cookieEnabled;
+    console.log(cookiesEnabled);
+    if (!cookiesEnabled) {
+        var para = document.createElement("p");
+        para.innerHTML = `Файлы cookies выключены. Это нарушает работу сайта.`;
+        document.getElementsByTagName("header")[0].appendChild(para); 
+        para.className = "announcement orange";
+    }
+}
 
 function show() {
     document.getElementById("content").style.display = "inline";
@@ -69,8 +82,8 @@ function checkCookie() {
 function SendToServer() {
     // Post-запрос серверу при авторизации, он идет вместе с файлами Cookies.
     var xhr = new XMLHttpRequest();
-    var url = "http://localhost:5000/";
-    xhr.open("POST", url, true);
+    var host = window.location.origin;
+    xhr.open("POST", host, true);
     xhr.send();
 }
 
@@ -128,19 +141,19 @@ function checkbox() {
 }
 
 function root() {
-    var doctypeLinks = ["http://localhost:5000/", "http://192.168.2.15:5000/"];
+    var doctypeLinks = ["http://localhost:5000", "http://192.168.2.15:5000"];
     for (var i = 0; i < doctypeLinks.length; i++) {
-        if (window.location.href === doctypeLinks[i]) {
+        if (window.location.origin === doctypeLinks[i]) {
             show();
             alert("That computer is allowed in root");
         }
     }
 }
 
-function url() {
-    var url = window.location.href;
-    DeleteCookie("url");
-    SetCookie("url", url, 30);
+function host() {
+    var host = window.location.origin;
+    DeleteCookie("host");
+    SetCookie("host", host, 30);
 }
 
 function hideEmptyTables() {

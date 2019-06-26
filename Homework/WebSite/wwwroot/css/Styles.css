@@ -37,9 +37,11 @@ td, th {
     text-align: center;
 }
 
+.orange {
+    color: orange;
+}
 .green {
     color: yellowgreen;
-    font-size: 36px;
 }
 
 .dayWeek {

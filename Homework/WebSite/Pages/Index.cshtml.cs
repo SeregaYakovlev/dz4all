@@ -19,11 +19,12 @@ namespace WebSite.Pages
         public void OnPost()
         {
             var user = Request.Cookies["user"];
-            var url = Request.Cookies["url"];
+            var host = Request.Cookies["host"];
             if (user == null) user = "null";
-            CookieWriter(user, url);
+            if (host == null) host = "null";
+            CookieWriter(user, host);
         }
-        private static void CookieWriter(string user, string url)
+        private static void CookieWriter(string user, string host)
         {
             string pathToVisits = @"C:\Users\Serega\Desktop\Publish\HomeworkVisits";
 
@@ -32,7 +33,7 @@ namespace WebSite.Pages
             var path = Path.Combine(pathToVisits, fileName);
             var file = new FileInfo(path);
             System.IO.File.AppendAllText(file.FullName, currentTime + " "
-                + user + " " + "url: " + url + Environment.NewLine + Environment.NewLine
+                + user + " " + "host: " + host + Environment.NewLine + Environment.NewLine
                 );
         }
     }
