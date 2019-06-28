@@ -20,6 +20,11 @@ namespace WebScraping
         static async Task Main(string[] args)
         {
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
+            if (!Directory.Exists(pathToDataDirectory))
+            {
+                Directory.CreateDirectory(pathToDataDirectory);
+            }
+
             #region Конфигурационная и отладочная хрень
             var logConfig = new LoggerConfiguration()
                 .MinimumLevel.Debug()
@@ -150,8 +155,6 @@ namespace WebScraping
                 //Здесь и далее безголовый браузер уже не нужен
                 await browser.CloseAsync();
 
-                
-
                 // Соединяемся с электронным дневником и получаем JSON
 
                 DateTime next = DateTime.MinValue;
@@ -173,14 +176,6 @@ namespace WebScraping
 
                 string k = args[0]; // На сколько недель нужна домашка?
                 int count = Convert.ToInt32(k);
-
-                // Удаляем папки из папки HomeworkData(где домашка хранится)
-                /*string[] dataFolder = Directory.GetFiles(pathToDataDirectory);
-                foreach (string file in dataFolder)
-                {
-                    File.Delete(file);
-                }
-                Log.Information("Папка Data очищена");*/
 
                 for (int i = 0; i < count; i++)
                 {

@@ -61,10 +61,8 @@
     <script type="text/javascript">
         window.onload = function () {
             VK.Widgets.Auth('vkAutorizer', {
-                "onAuth": function (data) {
+                "onAuth": function () {
                     show();
-                    DeleteCookie("user");
-                    SetCookie("user", data.first_name + ' ' + data.last_name + ' ' + data.uid, 30);
                     alert("Вы авторизовались успешно!");
                 }
             });
@@ -87,6 +85,11 @@
         @{
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
             var files = Directory.GetFiles(pathToDataDirectory);
+            if(!Directory.Exists(pathToDataDirectory))
+            {
+                Directory.CreateDirectory(pathToDataDirectory);
+            }
+
             if (files.Count() == 0)
             {
                 <p class="announcement">
