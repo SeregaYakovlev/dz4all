@@ -82,43 +82,38 @@
         </form>
         @using System.IO;
         @using Newtonsoft.Json.Linq;
+        @using System.Linq;
         @{
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
-            var files = Directory.GetFiles(pathToDataDirectory);
-            if(!Directory.Exists(pathToDataDirectory))
+
+            if (!Directory.Exists(pathToDataDirectory))
             {
                 Directory.CreateDirectory(pathToDataDirectory);
             }
 
-            if (files.Count() == 0)
+            var currentWeekDirectories = Directory.GetDirectories(pathToDataDirectory);
+            foreach (var currentWeekDir in currentWeekDirectories)
             {
-                <p class="announcement">
-                    <strong class="attention">ВНИМАНИЕ!</strong>
-                    <br />
-                    Данных нет.
-                    <br />
-                    Но это <strong class="attention">совсем не означает,</strong> что домашки нет.
-                    <br />
-                    Возможно, просто потерялись данные.
-                </p>
-            }
-            else
-            {
-                string thisWeek = System.IO.File.GetLastWriteTime(files[0]).ToString("dd.MM.yyyy HH:mm:ss");
-                <p class="fileModifiedTime">Эта неделя обновлена @thisWeek</p>
+                var files = Directory.GetFiles(currentWeekDir);
+                string latestFile = "";
+                DateTime lastUpdated = DateTime.MinValue;
 
-                if (files.Count() > 1) // Если других файлов нет, то будет exception
-                {
-                    string otherWeeks = System.IO.File.GetLastWriteTime(files[1]).ToString("dd.MM.yyyy HH:mm:ss");
-                    <p class="fileModifiedTime">Остальные @otherWeeks</p>
-                }
-                <!-- #region create table-->
-                int tdCount = 0;
                 foreach (var file in files)
                 {
+                    var fileUpdatedTime = System.IO.File.GetLastWriteTime(file);
+                    if (fileUpdatedTime > lastUpdated)
+                    {
+                        lastUpdated = fileUpdatedTime;
+                        latestFile = file;
+                    }
+                }
+
+                if (latestFile != "")
+                {
+                    //int tdCount = 0;
                     @Html.Raw("<table>");
                     string readedFile;
-                    using (var reader = new StreamReader(file))
+                    using (var reader = new StreamReader(latestFile))
                     {
                         readedFile = reader.ReadToEnd();
                     }
@@ -183,7 +178,7 @@
                                     <br class="br" />
                                     <span class="homework">Дз: @homework</span>
                                 }
-                                tdCount++;
+                                //tdCount++;
                             }
                             @Html.Raw("</td>");
                         }
@@ -192,23 +187,50 @@
                     }
                     @Html.Raw("</table>");
                 }
-                <!--#endregion-->
-                if (tdCount == 0)
-                {
-                    <p class="announcement green">
-                        @{
-                            List<System.DateTime> timeUpdateFiles = new List<System.DateTime>();
-                            for (int i = 0; i < files.Count(); i++)
-                            {
-                                var updateTime = System.IO.File.GetLastWriteTime(files[i]);
-                                timeUpdateFiles.Add(updateTime);
-                            }
-                            var maxTime = timeUpdateFiles.Max().ToString("dd.MM.yyyy HH:mm:ss");
-                        }
-                        Электронный дневник пустой с @maxTime!
-                    </p>
-                }
             }
+
+            /*if (files.Count() == 0)
+            {
+                <p class="announcement">
+                    <strong class="attention">ВНИМАНИЕ!</strong>
+                    <br />
+                    Данных нет.
+                    <br />
+                    Но это <strong class="attention">совсем не означает,</strong> что домашки нет.
+                    <br />
+                    Возможно, просто потерялись данные.
+                </p>
+            }
+            else
+            {
+                string thisWeek = System.IO.File.GetLastWriteTime(files[0]).ToString("dd.MM.yyyy HH:mm:ss");
+                <p class="fileModifiedTime">Эта неделя обновлена @thisWeek</p>
+
+                if (files.Count() > 1) // Если других файлов нет, то будет exception
+                {
+                    string otherWeeks = System.IO.File.GetLastWriteTime(files[1]).ToString("dd.MM.yyyy HH:mm:ss");
+                    <p class="fileModifiedTime">Остальные @otherWeeks</p>
+                }*/
+            <!-- #region create table-->
+
+            <!--#endregion-->
+
+            /*if (tdCount == 0)
+            {
+                <p class="announcement green">
+                    @{
+                        List<System.DateTime> timeUpdateFiles = new List<System.DateTime>();
+                        for (int i = 0; i < files.Count(); i++)
+                        {
+                            var updateTime = System.IO.File.GetLastWriteTime(files[i]);
+                            timeUpdateFiles.Add(updateTime);
+                        }
+                        var minTime = timeUpdateFiles.Min().ToString("dd.MM.yyyy HH:mm:ss");
+                    }
+                    Электронный дневник пустой с @minTime!
+                </p>
+            }*/
+            //}
         }
     </div>
 </body>

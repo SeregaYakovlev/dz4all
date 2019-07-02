@@ -20,10 +20,7 @@ namespace WebScraping
         static async Task Main(string[] args)
         {
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
-            if (!Directory.Exists(pathToDataDirectory))
-            {
-                Directory.CreateDirectory(pathToDataDirectory);
-            }
+            EnsureDirectoryExists(pathToDataDirectory);
 
             #region Конфигурационная и отладочная хрень
             var logConfig = new LoggerConfiguration()
@@ -70,7 +67,7 @@ namespace WebScraping
                 browser.TargetDestroyed += Browser_TargetDestroyed;
                 */
 
-                var page = await browser.NewPageAsync();
+                var p = await browser.NewPageAsync();
                 /* Дальше повторяем заход на сайт, так как
                  * периодически могут повторяться проблемы
                  * с SSL, в результате чего сайт может
@@ -82,7 +79,7 @@ namespace WebScraping
                 {
                     try
                     {
-                        await page.GoToAsync("https://petersburgedu.ru");
+                        await p.GoToAsync("https://petersburgedu.ru");
                         success = true;
                         Log.Information("Подключение к сайту {Site}: успешно!", "https://petersburgedu.ru");
                     }
@@ -97,7 +94,7 @@ namespace WebScraping
                 }
 
                 // Кликаем по кнопкам и переходим на страницы
-                var p = await GetPage(browser, "https://petersburgedu.ru");
+                p = await GetPage(browser, "https://petersburgedu.ru");
 
                 const string button = "body > div.container-fluid.framework.main-page > section > div.header-img.row-fluid.nopadding > div > div > div > div > div.diary-auth > a:nth-child(3)";
                 await p.WaitForSelectorAsync(button);
@@ -131,7 +128,7 @@ namespace WebScraping
 
                 p = await GetPage(browser, "https://dnevnik2.petersburgedu.ru");
 
-                /*WaitUntilNavigation срабатывает не всегда,
+                /*WaitForNavigation срабатывает не всегда,
                  * поэтому надеямся, что загрузились и куку получили.
                  */
                 try
@@ -145,12 +142,20 @@ namespace WebScraping
                     });
                 }
                 catch (TimeoutException)
-                {}
+                {
+                    Log.Error("WaitForNavigation failed");
+                }
                 
                 /* Куки нужны для того, чтобы сайт меня опознал
                  * при отправке http-запроса на сервер эл. дневника */
                 var cookies = await p.GetCookiesAsync();
-                var cookie = cookies.Where(c => c.Name == "X-JWT-Token").Select(c => new Cookie(c.Name, c.Value)).Single();
+                Cookie cookie;
+                do
+                {
+                    await Task.Delay(1000);
+                    cookie = cookies.Where(c => c.Name == "X-JWT-Token").Select(c => new Cookie(c.Name, c.Value)).Single();
+                }
+                while (cookie.Value == "");
 
                 //Здесь и далее безголовый браузер уже не нужен
                 await browser.CloseAsync();
@@ -201,16 +206,19 @@ namespace WebScraping
                         jsonContentAsAString = await result.Content.ReadAsStringAsync();
                         
                     }
-                    string fileName = $"{i}.json";
-                    var path = Path.Combine(pathToDataDirectory, fileName);
-                    var file = new FileInfo(path);
-                    await File.WriteAllTextAsync(file.FullName, jsonContentAsAString);
+
+                    string currentWeekPath =  Path.Combine(pathToDataDirectory, i.ToString());
+                    EnsureDirectoryExists(currentWeekPath);
+                    var files = Directory.GetFiles(currentWeekPath);
+
+                    string fileName = $"{files.Count()}.json";
+                    var path = Path.Combine(currentWeekPath, fileName);
+                    await File.WriteAllTextAsync(path, jsonContentAsAString);
                     Log.Information($"Файл создан: {fileName}");
                 }
             }
             Log.Information("Скрипт выполнен успешно!");
-            Log.CloseAndFlush(); /* Здесь отправляем логи на сервер логов
-            и ждём ответа сервера логов. */
+            Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
 
         private static async Task<Page> GetPage(Browser browser, string url)
@@ -222,7 +230,16 @@ namespace WebScraping
                 await Task.Delay(1000);
             } while (!pages.Any(p2 => p2.Url.StartsWith(url)));
             var page = pages.Single(p2 => p2.Url.StartsWith(url));
+            page.DefaultNavigationTimeout = 120 * 1000;
             return page;
+        }
+
+        private static void EnsureDirectoryExists(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
         }
 
         #region Методы для отладочной хрени
