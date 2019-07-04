@@ -206,13 +206,12 @@ namespace WebScraping
                         jsonContentAsAString = await result.Content.ReadAsStringAsync();
                         
                     }
-
-                    string currentWeekPath =  Path.Combine(pathToDataDirectory, i.ToString());
+                    string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                     EnsureDirectoryExists(currentWeekPath);
-                    var files = Directory.GetFiles(currentWeekPath);
-
+                    var files = new DirectoryInfo(currentWeekPath).GetFiles();
                     string fileName = $"{files.Count()}.json";
                     var path = Path.Combine(currentWeekPath, fileName);
+
                     await File.WriteAllTextAsync(path, jsonContentAsAString);
                     Log.Information($"Файл создан: {fileName}");
                 }
@@ -220,7 +219,6 @@ namespace WebScraping
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
-
         private static async Task<Page> GetPage(Browser browser, string url)
         {
             Page[] pages;

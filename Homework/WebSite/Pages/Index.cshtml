@@ -94,62 +94,67 @@
             var currentWeekDirectories = Directory.GetDirectories(pathToDataDirectory);
             foreach (var currentWeekDir in currentWeekDirectories)
             {
-                var files = Directory.GetFiles(currentWeekDir);
-                string latestFile = "";
-                DateTime lastUpdated = DateTime.MinValue;
+                var lastFile = new DirectoryInfo(currentWeekDir)
+                                    .GetFiles()
+                                    .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                                    .FirstOrDefault();
 
-                foreach (var file in files)
-                {
-                    var fileUpdatedTime = System.IO.File.GetLastWriteTime(file);
-                    if (fileUpdatedTime > lastUpdated)
-                    {
-                        lastUpdated = fileUpdatedTime;
-                        latestFile = file;
-                    }
-                }
+                //var files = Directory.GetFiles(currentWeekDir);
+                //string latestFile = "";
+                //DateTime lastUpdated = DateTime.MinValue;
 
-                if (latestFile != "")
+                //foreach (var file in files)
+                //{
+                //    var fileUpdatedTime = System.IO.File.GetLastWriteTime(file);
+                //    if (fileUpdatedTime > lastUpdated)
+                //    {
+                //        lastUpdated = fileUpdatedTime;
+                //        latestFile = file;
+                //    }
+                //}
+
+                if (lastFile != null)
                 {
                     //int tdCount = 0;
-                    @Html.Raw("<table>");
-                    string readedFile;
-                    using (var reader = new StreamReader(latestFile))
-                    {
-                        readedFile = reader.ReadToEnd();
-                    }
-                    // Начинаем парсить json
-                    var json = JObject.Parse(readedFile);
-                    var items = json["data"]["items"].AsEnumerable();
-                    items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
-                    /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
-                     * а потом без домашки.
-                     * OrderBy - сортировка по возрастанию, то есть номера уроков по возрастанию
-                     */
+                                @Html.Raw("<table>");
+                                string readedFile;
+                                using (var reader = new StreamReader(lastFile.FullName))
+                                {
+                                    readedFile = reader.ReadToEnd();
+                                }
+                                // Начинаем парсить json
+                                var json = JObject.Parse(readedFile);
+                                var items = json["data"]["items"].AsEnumerable();
+                                items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
+                                /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
+                                 * а потом без домашки.
+                                 * OrderBy - сортировка по возрастанию, то есть номера уроков по возрастанию
+                                 */
 
-                    // Группировка по дням недели
-                    var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
-                    /* Упорядоченная группировка по дням недели,
-                     * то есть сначала понедельник, затем вторник, среда и т. д. */
-                    var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
-                    // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
+                                // Группировка по дням недели
+                                var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
+                                /* Упорядоченная группировка по дням недели,
+                                 * то есть сначала понедельник, затем вторник, среда и т. д. */
+                                var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
+                                // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
 
-                    @Html.Raw("<tr>");
-                    foreach (var weekDayItems in itemsGroupedByWeeksDay)
-                    {
-                        var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                                @Html.Raw("<tr>");
+                                foreach (var weekDayItems in itemsGroupedByWeeksDay)
+                                {
+                                    var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                         <th>
                             <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
                             <br />
                             <span class="date">@date.ToString("dd.MM")</span>
                         </th>
                     }
-                    @Html.Raw("</tr>");
+                @Html.Raw("</tr>");
 
                     // k - количество пройденных строк
                     int k = 0;
-                    // rowCount - максимальное кол-во строк. Вычисляется по самому большому кол-ву уроков
-                    // в какой либо день.
-                    var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
+                // rowCount - максимальное кол-во строк. Вычисляется по самому большому кол-ву уроков
+                // в какой либо день.
+                var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
                     while (rowCount > k)
                     {
                         @Html.Raw("<tr>"); // Одна строка на всю неделю
@@ -160,13 +165,13 @@
                         {
 
                             var item = weekDayItems.Skip(k).FirstOrDefault();
-                            @Html.Raw("<td>"); // Одна ячейка на один урок
+                @Html.Raw("<td>"); // Одна ячейка на один урок
                               //Console.Write(item);
                             if (item != null)
                             {
                                 var subject = item["subject_name"].ToString();
-                                var lesson_content = item["content_name"].ToString();
-                                var tasks = item["tasks"];
+                var lesson_content = item["content_name"].ToString();
+                var tasks = item["tasks"];
                                 // Пишем домашку у уроков.
                                 // foreach нужен, вдруг будет несколько дз!!! у одного и того же предмета
                                 <span class="subject">@subject:</span>
@@ -177,7 +182,7 @@
                                     var homework = task["task_name"].ToString();
                                     <br class="br" />
                                     <span class="homework">Дз: @homework</span>
-                                }
+            }
                                 //tdCount++;
                             }
                             @Html.Raw("</td>");
