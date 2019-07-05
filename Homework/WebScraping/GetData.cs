@@ -12,12 +12,13 @@ using System.Net.Http;
 using System.Net;
 using Newtonsoft.Json.Linq;
 
+
 namespace WebScraping
 {
     class GetData
     {
         //static JsonSerializerSettings jsonSettings;
-        static async Task Main(string[] args)
+        static async System.Threading.Tasks.Task Main(string[] args)
         {
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
             EnsureDirectoryExists(pathToDataDirectory);
@@ -30,7 +31,7 @@ namespace WebScraping
             Log.Logger = logConfig.CreateLogger();
 
             //var jsonResolver = new IgnorableSerializerContractResolver();
-             //ignore single property
+            //ignore single property
             //jsonResolver.Ignore(typeof(Company), "ExitCode");
             //jsonResolver.Ignore(typeof(Company), "ExitTime");
             // ignore single datatype
@@ -87,8 +88,8 @@ namespace WebScraping
                     {
                         Log.Error(e, "GoToAsync({Site} failed", "https://petersburgedu.ru");
                         Log.Information("Подключение к сайту {Site}: Ошибка, повторяю...", "https://petersburgedu.ru");
-                        Log.Information("Попытка № {attempt}", initiatingCount+1);
-                        await Task.Delay(3000);
+                        Log.Information("Попытка № {attempt}", initiatingCount + 1);
+                        await System.Threading.Tasks.Task.Delay(3000);
                         initiatingCount++;
                     }
                 }
@@ -145,14 +146,14 @@ namespace WebScraping
                 {
                     Log.Error("WaitForNavigation failed");
                 }
-                
+
                 /* Куки нужны для того, чтобы сайт меня опознал
                  * при отправке http-запроса на сервер эл. дневника */
                 var cookies = await p.GetCookiesAsync();
                 Cookie cookie;
                 do
                 {
-                    await Task.Delay(1000);
+                    await System.Threading.Tasks.Task.Delay(1000);
                     cookie = cookies.Where(c => c.Name == "X-JWT-Token").Select(c => new Cookie(c.Name, c.Value)).Single();
                 }
                 while (cookie.Value == "");
@@ -204,13 +205,61 @@ namespace WebScraping
                         var result = await client.GetAsync(link);
                         result.EnsureSuccessStatusCode();
                         jsonContentAsAString = await result.Content.ReadAsStringAsync();
-                        
+
                     }
                     string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                     EnsureDirectoryExists(currentWeekPath);
                     var files = new DirectoryInfo(currentWeekPath).GetFiles();
                     string fileName = $"{files.Count()}.json";
                     var path = Path.Combine(currentWeekPath, fileName);
+                    
+                    var lastFile = new DirectoryInfo(currentWeekPath)
+                                        .GetFiles()
+                                        .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                                        .FirstOrDefault();
+                    
+                    if (lastFile != null)
+                    {
+                        string readedFile;
+                        using (var reader = new StreamReader(lastFile.FullName))
+                        {
+                            readedFile = reader.ReadToEnd();
+                        }
+                        var jsonClassesOfDiskFile = JsonConvert.DeserializeObject<Rootobject>(readedFile);
+                        var jsonClassesOfServerFile = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsAString);
+                        //int z = 0;
+                        var itemsServerFile = jsonClassesOfServerFile.data.items;
+                        var itemsDiskFile = jsonClassesOfDiskFile.data.items;
+
+                        for (int z = 0; z < itemsServerFile.Length; z++)
+                        {
+                            for (int h = 0; h < itemsDiskFile.Length; h++)
+                            {
+                                if (itemsServerFile[z].Equals(itemsDiskFile[z])) continue;
+                                else
+                                {
+                                    var itemsServerFileSubject = itemsServerFile[z].subject_name;
+                                    var itemsDiskFileSubject = itemsDiskFile[z].subject_name;
+                                    var itemsServerFileTasks = itemsServerFile[z].tasks;
+                                    var itemsDiskFileTasks = itemsDiskFile[z].tasks;
+                                    for (int y = 0; y < itemsServerFileTasks.Length; y++)
+                                    {
+                                        for (int x = 0; x < itemsDiskFileTasks.Length; x++)
+                                        {
+                                            string diffSubject1 = itemsServerFile[z].subject_name.ToString();
+                                            string diffSubject2 = itemsDiskFile[z].subject_name.ToString();
+                                            string diffHomework1 = itemsServerFile[z].tasks[y].task_name.ToString();
+                                            string diffHomework2 = itemsDiskFile[z].tasks[y].task_name.ToString();
+                                            Log.Information(diffSubject1);
+                                            Log.Information(diffSubject2);
+                                            Log.Information(diffHomework1);
+                                            Log.Information(diffHomework2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     await File.WriteAllTextAsync(path, jsonContentAsAString);
                     Log.Information($"Файл создан: {fileName}");
@@ -225,7 +274,7 @@ namespace WebScraping
             do
             {
                 pages = await browser.PagesAsync();
-                await Task.Delay(1000);
+                await System.Threading.Tasks.Task.Delay(1000);
             } while (!pages.Any(p2 => p2.Url.StartsWith(url)));
             var page = pages.Single(p2 => p2.Url.StartsWith(url));
             page.DefaultNavigationTimeout = 120 * 1000;

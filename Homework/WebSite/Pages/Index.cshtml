@@ -83,6 +83,7 @@
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @using System.Linq;
+        @using Newtonsoft.Json;
         @{
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
 
@@ -117,26 +118,29 @@
                 {
                     //int tdCount = 0;
                                 @Html.Raw("<table>");
-                                string readedFile;
-                                using (var reader = new StreamReader(lastFile.FullName))
-                                {
-                                    readedFile = reader.ReadToEnd();
-                                }
-                                // Начинаем парсить json
-                                var json = JObject.Parse(readedFile);
-                                var items = json["data"]["items"].AsEnumerable();
-                                items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
-                                /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
-                                 * а потом без домашки.
-                                 * OrderBy - сортировка по возрастанию, то есть номера уроков по возрастанию
-                                 */
+                    string readedFile;
+                    using (var reader = new StreamReader(lastFile.FullName))
+                    {
+                        readedFile = reader.ReadToEnd();
+                    }
+                    // Начинаем парсить json
+                    //
+                    var jsonClasses = JsonConvert.DeserializeObject<WebSite.Rootobject>(readedFile);
 
-                                // Группировка по дням недели
-                                var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
-                                /* Упорядоченная группировка по дням недели,
-                                 * то есть сначала понедельник, затем вторник, среда и т. д. */
-                                var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
-                                // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
+                    var json = JObject.Parse(readedFile);
+                    var items = json["data"]["items"].AsEnumerable();
+                    items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
+                    /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
+                     * а потом без домашки.
+                     * OrderBy - сортировка по возрастанию, то есть номера уроков по возрастанию
+                     */
+
+                    // Группировка по дням недели
+                    var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
+                    /* Упорядоченная группировка по дням недели,
+                     * то есть сначала понедельник, затем вторник, среда и т. д. */
+                    var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
+                    // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
 
                                 @Html.Raw("<tr>");
                                 foreach (var weekDayItems in itemsGroupedByWeeksDay)

@@ -15,7 +15,7 @@ namespace WebSite
         public static void Main(string[] args)
         {
             CreateWebHostBuilder(args)
-                .UseUrls("http://*:80")
+                .UseUrls("http://*:5000")
                 //.UseWebRoot(@".\WebSite\wwwroot\")
                 .Build()
                 .Run();
