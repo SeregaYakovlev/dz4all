@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -9,9 +10,14 @@ namespace WebScraping
     public class Rootobject
     {
         public Data data { get; set; }
+
+        internal object GetDiffs(Rootobject newTree)
+        {
+            return data.GetDiffs(newTree.data);
+        }
         /*public object[] validations { get; set; }
-        public object[] messages { get; set; }
-        public object[] debug { get; set; }*/
+public object[] messages { get; set; }
+public object[] debug { get; set; }*/
 
         /*public override int GetHashCode()
         {
@@ -36,12 +42,39 @@ namespace WebScraping
     public class Data
     {
         public Item[] items { get; set; }
+
+        internal IEnumerable<object> GetDiffs(Data data)
+        {
+            var join = items.FullOuterJoin(data.items, old => old.subject_name, @new => @new.subject_name, (old, @new, key) => (old, @new));
+            foreach (var joinEntry in join)
+            {
+                if (joinEntry.old == null)
+                {
+                    
+                    yield return joinEntry;// "new: " + joinEntry.@new.subject_name.ToString();
+                }
+                else if (joinEntry.@new == null)
+                {
+                    
+                    yield return joinEntry;// "delete: " + joinEntry.old.subject_name.ToString();
+                }
+                else
+                {
+                    var diffs = joinEntry.old.GetDiffs(joinEntry.@new);
+                    if (diffs.Any())
+                    {
+                        
+                        yield return joinEntry;
+                    }
+                }
+            }
+        }
         /*public int before { get; set; }
-        public int current { get; set; }
-        public int last { get; set; }
-        public int next { get; set; }
-        public int total_pages { get; set; }
-        public int total_items { get; set; }*/
+public int current { get; set; }
+public int last { get; set; }
+public int next { get; set; }
+public int total_pages { get; set; }
+public int total_items { get; set; }*/
 
         /*public override int GetHashCode()
         {
@@ -57,11 +90,23 @@ namespace WebScraping
     public class Item
     {
         //public Identity identity { get; set; }
-        //public int number { get; set; }
-        //public string datetime_from { get; set; }
+        public int number { get; set; }
+        public string datetime_from { get; set; }
         //public string datetime_to { get; set; }
         //public int subject_id { get; set; }
         public string subject_name { get; set; }
+        public string updateTime
+        {
+            get
+            {
+                return DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+            }
+        }
+        /*public string type(string subjectType)
+        {
+            return subjectType;
+        }*/
+        public string type { get; set; }
         //public string content_name { get; set; }
         public Task[] tasks { get; set; }
         //public Estimate[] estimates { get; set; }
@@ -81,7 +126,17 @@ namespace WebScraping
             }
             return hash;
         }*/
-        
+
+        public IEnumerable<object> GetDiffs(Item other)
+        {
+            if (!subject_name.Equals(other.subject_name)) throw new InvalidOperationException();
+
+            if (string.Join("", tasks.Select(t => t.task_name)) != string.Join("", other.tasks.Select(t => t.task_name)))
+            {
+                return other.tasks;
+            }
+            return Enumerable.Empty<object>();
+        }
     }
 
     /*public class Identity
@@ -101,7 +156,7 @@ namespace WebScraping
         {
             return task_name.GetHashCode();
         }*/
-        
+
     }
 
     /*public class Estimate
@@ -112,5 +167,31 @@ namespace WebScraping
         public string estimate_value_name { get; set; }
         public object estimate_comment { get; set; }
     }*/
+    internal static class MyExtensions
+    {
+        internal static IEnumerable<TResult> FullOuterJoin<TA, TB, TKey, TResult>(
+        this IEnumerable<TA> a,
+        IEnumerable<TB> b,
+        Func<TA, TKey> selectKeyA,
+        Func<TB, TKey> selectKeyB,
+        Func<TA, TB, TKey, TResult> projection,
+        TA defaultA = default(TA),
+        TB defaultB = default(TB),
+        IEqualityComparer<TKey> cmp = null)
+        {
+            cmp = cmp ?? EqualityComparer<TKey>.Default;
+            var alookup = a.ToLookup(selectKeyA, cmp);
+            var blookup = b.ToLookup(selectKeyB, cmp);
 
+            var keys = new HashSet<TKey>(alookup.Select(p => p.Key), cmp);
+            keys.UnionWith(blookup.Select(p => p.Key));
+
+            var join = from key in keys
+                       from xa in alookup[key].DefaultIfEmpty(defaultA)
+                       from xb in blookup[key].DefaultIfEmpty(defaultB)
+                       select projection(xa, xb, key);
+
+            return join;
+        }
+    }
 }

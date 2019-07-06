@@ -212,12 +212,15 @@ namespace WebScraping
                     var files = new DirectoryInfo(currentWeekPath).GetFiles();
                     string fileName = $"{files.Count()}.json";
                     var path = Path.Combine(currentWeekPath, fileName);
-                    
+
+                    /*await File.WriteAllTextAsync(path, jsonContentAsAString);
+                    Log.Information($"Файл создан: {fileName}");*/
+
                     var lastFile = new DirectoryInfo(currentWeekPath)
                                         .GetFiles()
-                                        .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                                        .OrderByDescending(fi => fi.LastWriteTime)
                                         .FirstOrDefault();
-                    
+
                     if (lastFile != null)
                     {
                         string readedFile;
@@ -225,97 +228,71 @@ namespace WebScraping
                         {
                             readedFile = reader.ReadToEnd();
                         }
-                        var jsonClassesOfDiskFile = JsonConvert.DeserializeObject<Rootobject>(readedFile);
-                        var jsonClassesOfServerFile = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsAString);
-                        //int z = 0;
-                        var itemsServerFile = jsonClassesOfServerFile.data.items;
-                        var itemsDiskFile = jsonClassesOfDiskFile.data.items;
+                        var oldTree = JsonConvert.DeserializeObject<Rootobject>(readedFile);
+                        var newTree = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsAString);
+                        var result = oldTree.GetDiffs(newTree);
+                        var convertToJson = JsonConvert.SerializeObject(result);
+                        Log.Debug(convertToJson);
 
-                        for (int z = 0; z < itemsServerFile.Length; z++)
-                        {
-                            for (int h = 0; h < itemsDiskFile.Length; h++)
-                            {
-                                if (itemsServerFile[z].Equals(itemsDiskFile[z])) continue;
-                                else
-                                {
-                                    var itemsServerFileSubject = itemsServerFile[z].subject_name;
-                                    var itemsDiskFileSubject = itemsDiskFile[z].subject_name;
-                                    var itemsServerFileTasks = itemsServerFile[z].tasks;
-                                    var itemsDiskFileTasks = itemsDiskFile[z].tasks;
-                                    for (int y = 0; y < itemsServerFileTasks.Length; y++)
-                                    {
-                                        for (int x = 0; x < itemsDiskFileTasks.Length; x++)
-                                        {
-                                            string diffSubject1 = itemsServerFile[z].subject_name.ToString();
-                                            string diffSubject2 = itemsDiskFile[z].subject_name.ToString();
-                                            string diffHomework1 = itemsServerFile[z].tasks[y].task_name.ToString();
-                                            string diffHomework2 = itemsDiskFile[z].tasks[y].task_name.ToString();
-                                            Log.Information(diffSubject1);
-                                            Log.Information(diffSubject2);
-                                            Log.Information(diffHomework1);
-                                            Log.Information(diffHomework2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        string diffDirectory = @"C:\Users\Serega\Desktop\Publish\Diffs";
+                        EnsureDirectoryExists(diffDirectory);
+
+                        var diffDirectoryPath = Path.Combine(diffDirectory, "diffs.json");
+                        await File.WriteAllTextAsync(diffDirectoryPath, convertToJson);
                     }
+                }
+                Log.Information("Скрипт выполнен успешно!");
+                Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
+            }
+        }
+            private static async Task<Page> GetPage(Browser browser, string url)
+            {
+                Page[] pages;
+                do
+                {
+                    pages = await browser.PagesAsync();
+                    await System.Threading.Tasks.Task.Delay(1000);
+                } while (!pages.Any(p2 => p2.Url.StartsWith(url)));
+                var page = pages.Single(p2 => p2.Url.StartsWith(url));
+                page.DefaultNavigationTimeout = 120 * 1000;
+                return page;
+            }
 
-                    await File.WriteAllTextAsync(path, jsonContentAsAString);
-                    Log.Information($"Файл создан: {fileName}");
+            private static void EnsureDirectoryExists(string directory)
+            {
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
                 }
             }
-            Log.Information("Скрипт выполнен успешно!");
-            Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
-        }
-        private static async Task<Page> GetPage(Browser browser, string url)
-        {
-            Page[] pages;
-            do
-            {
-                pages = await browser.PagesAsync();
-                await System.Threading.Tasks.Task.Delay(1000);
-            } while (!pages.Any(p2 => p2.Url.StartsWith(url)));
-            var page = pages.Single(p2 => p2.Url.StartsWith(url));
-            page.DefaultNavigationTimeout = 120 * 1000;
-            return page;
-        }
 
-        private static void EnsureDirectoryExists(string directory)
-        {
-            if (!Directory.Exists(directory))
+            #region Методы для отладочной хрени
+            /*
+            private static void Browser_TargetDestroyed(object sender, TargetChangedArgs e)
             {
-                Directory.CreateDirectory(directory);
+                Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
             }
-        }
 
-        #region Методы для отладочной хрени
-        /*
-        private static void Browser_TargetDestroyed(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
+            private static void Browser_TargetCreated(object sender, TargetChangedArgs e)
+            {
+                Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
+            }
 
-        private static void Browser_TargetCreated(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
+            private static void Browser_TargetChanged(object sender, TargetChangedArgs e)
+            {
+                Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
+            }
 
-        private static void Browser_TargetChanged(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
+            private static void Browser_Disconnected(object sender, EventArgs e)
+            {
+                Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
+            }
 
-        private static void Browser_Disconnected(object sender, EventArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
+            private static void Browser_Closed(object sender, EventArgs e)
+            {
+                Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
+            }
+            */
+            #endregion
         }
-
-        private static void Browser_Closed(object sender, EventArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-        */
-        #endregion
     }
-}
