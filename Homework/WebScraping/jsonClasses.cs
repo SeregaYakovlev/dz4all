@@ -50,12 +50,12 @@ public object[] debug { get; set; }*/
             {
                 if (joinEntry.old == null)
                 {
-                    
+                    joinEntry.@new.type("new");
                     yield return joinEntry;// "new: " + joinEntry.@new.subject_name.ToString();
                 }
                 else if (joinEntry.@new == null)
                 {
-                    
+                    joinEntry.old.type("deleted");
                     yield return joinEntry;// "delete: " + joinEntry.old.subject_name.ToString();
                 }
                 else
@@ -63,7 +63,8 @@ public object[] debug { get; set; }*/
                     var diffs = joinEntry.old.GetDiffs(joinEntry.@new);
                     if (diffs.Any())
                     {
-                        
+                        joinEntry.old.type("otherChanges");
+                        joinEntry.@new.type("otherChanges");
                         yield return joinEntry;
                     }
                 }
@@ -102,11 +103,19 @@ public int total_items { get; set; }*/
                 return DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
             }
         }
-        /*public string type(string subjectType)
+        private string st;
+        public string status
         {
-            return subjectType;
-        }*/
-        public string type { get; set; }
+            get
+            {
+                return st;
+            }
+        }
+
+        public void type(string subjectStatus)
+        {
+            st = subjectStatus;
+        }
         //public string content_name { get; set; }
         public Task[] tasks { get; set; }
         //public Estimate[] estimates { get; set; }
