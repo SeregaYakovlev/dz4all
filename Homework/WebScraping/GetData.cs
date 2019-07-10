@@ -218,7 +218,7 @@ namespace WebScraping
 
                     var lastFile = new DirectoryInfo(currentWeekPath)
                                         .GetFiles()
-                                        .OrderByDescending(fi => fi.LastWriteTime)
+                                        .OrderByDescending(fi => fi.CreationTime)
                                         .FirstOrDefault();
 
                     if (lastFile != null)
@@ -231,14 +231,20 @@ namespace WebScraping
                         var oldTree = JsonConvert.DeserializeObject<Rootobject>(readedFile);
                         var newTree = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsAString);
                         var result = oldTree.GetDiffs(newTree);
+                        // Item1(old) - файлы, Item2(@new) - электронный дневник
                         var convertToJson = JsonConvert.SerializeObject(result);
                         Log.Debug(convertToJson);
 
-                        string diffDirectory = @"C:\Users\Serega\Desktop\Publish\Diffs";
-                        EnsureDirectoryExists(diffDirectory);
+                        string diffsDirectory = @"C:\Users\Serega\Desktop\Publish\Diffs";
+                        EnsureDirectoryExists(diffsDirectory);
+                        if (convertToJson.ToString() != "[]") // РАЗОБРАТЬСЯ С ЭТИМ!!!
+                        {
+                            var diffsFile = Directory.GetFiles(diffsDirectory)[0];
+                            var parsedFile = JsonConvert.SerializeObject(diffsFile);
 
-                        var diffDirectoryPath = Path.Combine(diffDirectory, "diffs.json");
-                        await File.WriteAllTextAsync(diffDirectoryPath, convertToJson);
+                            var diffDirectoryPath = Path.Combine(diffsDirectory, "diffs.json");
+                            await File.AppendAllTextAsync(diffDirectoryPath, convertToJson);
+                        }
                     }
                 }
                 Log.Information("Скрипт выполнен успешно!");

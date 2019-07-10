@@ -45,26 +45,41 @@ public object[] debug { get; set; }*/
 
         internal IEnumerable<object> GetDiffs(Data data)
         {
-            var join = items.FullOuterJoin(data.items, old => old.subject_name, @new => @new.subject_name, (old, @new, key) => (old, @new));
+            //var groupedItems = items.AsEnumerable();
+
+            //var groupedItems = items.OrderBy();
+            var join = items.FullOuterJoin(data.items, old => (old.subject_name, old.datetime_from), @new => (@new.subject_name, @new.datetime_from), (old, @new, key) => (old, @new));
             foreach (var joinEntry in join)
             {
                 if (joinEntry.old == null)
                 {
-                    joinEntry.@new.type("new");
+                    joinEntry.@new.subject_type("new");
                     yield return joinEntry;// "new: " + joinEntry.@new.subject_name.ToString();
                 }
                 else if (joinEntry.@new == null)
                 {
-                    joinEntry.old.type("deleted");
+                    joinEntry.old.subject_type("deleted");
                     yield return joinEntry;// "delete: " + joinEntry.old.subject_name.ToString();
                 }
                 else
                 {
+                    //join.OrderBy(grp => grp.old.number).ThenBy(grp.@new.number);
+
+                    //join.OrderBy(grp => grp.old.subject_name).ThenBy(grp => grp.@new.subject_name);
                     var diffs = joinEntry.old.GetDiffs(joinEntry.@new);
                     if (diffs.Any())
                     {
-                        joinEntry.old.type("otherChanges");
-                        joinEntry.@new.type("otherChanges");
+                        foreach (var diff in diffs)
+                        {
+                            if (diff.task_name.Any())
+                            {
+                                joinEntry.old.homework_type("changed");
+                                joinEntry.@new.homework_type("changed");
+                            };
+                        }
+                        //Console.Write(diffs);
+                        //joinEntry.old.type("otherChanges");
+                        //joinEntry.@new.type("otherChanges");
                         yield return joinEntry;
                     }
                 }
@@ -92,6 +107,16 @@ public int total_items { get; set; }*/
     {
         //public Identity identity { get; set; }
         public int number { get; set; }
+        //private string dateTotal;
+        /*public string Date
+        {
+            get
+            {
+                var date = DateTime.ParseExact(datetime_from, "dd.MM.yyyy HH:mm:ss", null).Date;
+                dateTotal = date.ToString();
+                return dateTotal;
+            }
+        }*/
         public string datetime_from { get; set; }
         //public string datetime_to { get; set; }
         //public int subject_id { get; set; }
@@ -103,18 +128,29 @@ public int total_items { get; set; }*/
                 return DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
             }
         }
-        private string st;
-        public string status
+        private string subjectStatus;
+        private string homeworkStatus;
+        public string SubjectStatus
         {
             get
             {
-                return st;
+                return subjectStatus;
             }
         }
-
-        public void type(string subjectStatus)
+        public string HomeworkStatus
         {
-            st = subjectStatus;
+            get
+            {
+                return homeworkStatus;
+            }
+        }
+        public void subject_type(string subjectSt)
+        {
+            subjectStatus = subjectSt;
+        }
+        public void homework_type(string homeworkSt)
+        {
+            homeworkStatus = homeworkSt;
         }
         //public string content_name { get; set; }
         public Task[] tasks { get; set; }
@@ -136,15 +172,18 @@ public int total_items { get; set; }*/
             return hash;
         }*/
 
-        public IEnumerable<object> GetDiffs(Item other)
+        public IEnumerable<Task> GetDiffs(Item other)
         {
-            if (!subject_name.Equals(other.subject_name)) throw new InvalidOperationException();
+            if (!subject_name.Equals(other.subject_name) || !datetime_from.Equals(other.datetime_from))
+            {
+                throw new InvalidOperationException();
+            }
 
             if (string.Join("", tasks.Select(t => t.task_name)) != string.Join("", other.tasks.Select(t => t.task_name)))
             {
                 return other.tasks;
             }
-            return Enumerable.Empty<object>();
+            return Enumerable.Empty<Task>();
         }
     }
 

@@ -97,7 +97,7 @@
             {
                 var lastFile = new DirectoryInfo(currentWeekDir)
                                     .GetFiles()
-                                    .OrderByDescending(fi => fi.LastWriteTimeUtc)
+                                    .OrderByDescending(fi => fi.CreationTime)
                                     .FirstOrDefault();
 
                 //var files = Directory.GetFiles(currentWeekDir);
@@ -125,7 +125,7 @@
                     }
                     // Начинаем парсить json
                     //
-                    var jsonClasses = JsonConvert.DeserializeObject<WebSite.Rootobject>(readedFile);
+                    
 
                     var json = JObject.Parse(readedFile);
                     var items = json["data"]["items"].AsEnumerable();
@@ -146,11 +146,11 @@
                                 foreach (var weekDayItems in itemsGroupedByWeeksDay)
                                 {
                                     var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                        <th>
+                        @Html.Raw("<th>");
                             <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
                             <br />
                             <span class="date">@date.ToString("dd.MM")</span>
-                        </th>
+                        @Html.Raw("</th>");
                     }
                 @Html.Raw("</tr>");
 

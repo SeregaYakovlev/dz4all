@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ifCookiesEnabled();
     checkAutorization();
     set_checkbox();
-    //root();
+    root();
     hideEmptyTables();
 })
 
@@ -116,7 +116,7 @@ function set_checkbox() {
 }
 
 function root() {
-    var doctypeLinks = ["http://localhost:5000", "http://192.168.2.15:5000"];
+    var doctypeLinks = ["http://localhost:5000", "http://192.168.2.15:5000", "http://192.168.1.60:5000"];
     for (var i = 0; i < doctypeLinks.length; i++) {
         if (window.location.origin === doctypeLinks[i]) {
             show();
