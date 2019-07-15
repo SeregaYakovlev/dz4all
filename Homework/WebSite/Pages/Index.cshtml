@@ -86,6 +86,7 @@
         @using Newtonsoft.Json;
         @{
             string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
+            string pathToDiffsFile = @"C:\Users\Serega\Desktop\Publish\Diffs\diffs.json";
 
             if (!Directory.Exists(pathToDataDirectory))
             {
@@ -117,18 +118,27 @@
                 if (lastFile != null)
                 {
                     //int tdCount = 0;
-                                @Html.Raw("<table>");
+                    @Html.Raw("<table>");
                     string readedFile;
+                    string readedDiffsFile;
                     using (var reader = new StreamReader(lastFile.FullName))
                     {
                         readedFile = reader.ReadToEnd();
                     }
+                    using (var reader = new StreamReader(pathToDiffsFile))
+                    {
+                        readedDiffsFile = reader.ReadToEnd();
+                    }
                     // Начинаем парсить json
                     //
-                    
+
+                    var diffsJson = JArray.Parse(readedDiffsFile);
+                    //var diffsJson = JsonConvert.SerializeObject<JObject>(diffsJsonArray);
 
                     var json = JObject.Parse(readedFile);
+                    //Console.Write(json["subject_name"].FirstOrDefault());
                     var items = json["data"]["items"].AsEnumerable();
+
                     items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
                     /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
                      * а потом без домашки.
@@ -142,23 +152,23 @@
                     var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
                     // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
 
-                                @Html.Raw("<tr>");
-                                foreach (var weekDayItems in itemsGroupedByWeeksDay)
-                                {
-                                    var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                    @Html.Raw("<tr>");
+                    foreach (var weekDayItems in itemsGroupedByWeeksDay)
+                    {
+                        var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                         @Html.Raw("<th>");
-                            <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
-                            <br />
-                            <span class="date">@date.ToString("dd.MM")</span>
+                        <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
+                        <br />
+                        <span class="date">@date.ToString("dd.MM")</span>
                         @Html.Raw("</th>");
                     }
-                @Html.Raw("</tr>");
+                    @Html.Raw("</tr>");
 
                     // k - количество пройденных строк
                     int k = 0;
-                // rowCount - максимальное кол-во строк. Вычисляется по самому большому кол-ву уроков
-                // в какой либо день.
-                var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
+                    // rowCount - максимальное кол-во строк. Вычисляется по самому большому кол-ву уроков
+                    // в какой либо день.
+                    var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
                     while (rowCount > k)
                     {
                         @Html.Raw("<tr>"); // Одна строка на всю неделю
@@ -169,13 +179,15 @@
                         {
 
                             var item = weekDayItems.Skip(k).FirstOrDefault();
-                @Html.Raw("<td>"); // Одна ячейка на один урок
+                            @Html.Raw("<td>"); // Одна ячейка на один урок
                               //Console.Write(item);
                             if (item != null)
                             {
                                 var subject = item["subject_name"].ToString();
-                var lesson_content = item["content_name"].ToString();
-                var tasks = item["tasks"];
+                                var lesson_content = item["content_name"].ToString();
+                                var tasks = item["tasks"];
+                                var datetimeFrom = item["datetime_from"].ToString();
+
                                 // Пишем домашку у уроков.
                                 // foreach нужен, вдруг будет несколько дз!!! у одного и того же предмета
                                 <span class="subject">@subject:</span>
@@ -186,15 +198,44 @@
                                     var homework = task["task_name"].ToString();
                                     <br class="br" />
                                     <span class="homework">Дз: @homework</span>
-            }
-                                //tdCount++;
+                                }
+
+                                foreach (var jsonObjects in diffsJson)
+                                {
+                                    var item1 = jsonObjects["Item1"];
+                                    var item2 = jsonObjects["Item2"];
+
+                                    if (item1.ToString() == "null")
+                                    {
+                                        var subjectName = item2["subject_name"].ToString();
+                                        var datetime = item2["datetime_from"].ToString();
+                                        var updateTime = item2["updateTime"].ToString();
+                                        if (subjectName == subject && datetime == datetimeFrom)
+                                        {
+                                            <span>Домашка появилась @updateTime</span>
+                                        }
+                                    }
+                                    else if (item2.ToString() == "null")
+                                    {
+                                        var subjectName = item1["subject_name"].ToString();
+                                        var datetime = item1["datetime_from"].ToString();
+                                        var updateTime = item1["updateTime"].ToString();
+                                        if (subjectName == subject && datetime == datetimeFrom)
+                                        {
+
+                                            <span>Домашка появилась @updateTime</span>
+                                        }
+                                    }
+                                    
+                                    //tdCount++;
+                                }
+                                @Html.Raw("</td>");
                             }
-                            @Html.Raw("</td>");
+                            @Html.Raw("</tr>");
+                            k++;
                         }
-                        @Html.Raw("</tr>");
-                        k++;
+                        @Html.Raw("</table>");
                     }
-                    @Html.Raw("</table>");
                 }
             }
 

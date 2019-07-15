@@ -11,43 +11,22 @@ namespace WebScraping
     {
         public Data data { get; set; }
 
-        internal object GetDiffs(Rootobject newTree)
+        internal IEnumerable<(Item, Item)> GetDiffs(Rootobject newTree)
         {
             return data.GetDiffs(newTree.data);
         }
         /*public object[] validations { get; set; }
 public object[] messages { get; set; }
 public object[] debug { get; set; }*/
-
-        /*public override int GetHashCode()
-        {
-            return data.GetHashCode();
-        }*/
-
-        /*public byte[] GetSHA512()
-        {
-            var stream = new MemoryStream();
-            SHA512 shaM = new SHA512Managed();
-            byte[] result;
-            result = shaM.ComputeHash(stream);
-            return result;
-        }
-        internal void WriteHashToStream(MemoryStream stream)
-        {
-            
-        }*/
-
     }
 
     public class Data
     {
         public Item[] items { get; set; }
 
-        internal IEnumerable<object> GetDiffs(Data data)
+        internal IEnumerable<(Item, Item)> GetDiffs(Data data)
         {
-            //var groupedItems = items.AsEnumerable();
 
-            //var groupedItems = items.OrderBy();
             var join = items.FullOuterJoin(data.items, old => (old.subject_name, old.datetime_from), @new => (@new.subject_name, @new.datetime_from), (old, @new, key) => (old, @new));
             foreach (var joinEntry in join)
             {
@@ -63,9 +42,7 @@ public object[] debug { get; set; }*/
                 }
                 else
                 {
-                    //join.OrderBy(grp => grp.old.number).ThenBy(grp.@new.number);
 
-                    //join.OrderBy(grp => grp.old.subject_name).ThenBy(grp => grp.@new.subject_name);
                     var diffs = joinEntry.old.GetDiffs(joinEntry.@new);
                     if (diffs.Any())
                     {
@@ -77,9 +54,7 @@ public object[] debug { get; set; }*/
                                 joinEntry.@new.homework_type("changed");
                             };
                         }
-                        //Console.Write(diffs);
-                        //joinEntry.old.type("otherChanges");
-                        //joinEntry.@new.type("otherChanges");
+
                         yield return joinEntry;
                     }
                 }
@@ -92,15 +67,7 @@ public int next { get; set; }
 public int total_pages { get; set; }
 public int total_items { get; set; }*/
 
-        /*public override int GetHashCode()
-        {
-            var hash = 0;
-            foreach (var item in items)
-            {
-                hash ^= item.GetHashCode();
-            }
-            return hash;
-        }*/
+
     }
 
     public class Item
@@ -108,15 +75,7 @@ public int total_items { get; set; }*/
         //public Identity identity { get; set; }
         public int number { get; set; }
         //private string dateTotal;
-        /*public string Date
-        {
-            get
-            {
-                var date = DateTime.ParseExact(datetime_from, "dd.MM.yyyy HH:mm:ss", null).Date;
-                dateTotal = date.ToString();
-                return dateTotal;
-            }
-        }*/
+
         public string datetime_from { get; set; }
         //public string datetime_to { get; set; }
         //public int subject_id { get; set; }
@@ -156,21 +115,7 @@ public int total_items { get; set; }*/
         public Task[] tasks { get; set; }
         //public Estimate[] estimates { get; set; }
 
-        /*public override int GetHashCode()
-        {
-            int hash = 0;
-            //hash ^= number.GetHashCode();
-            //hash ^= datetime_from.GetHashCode();
-            //hash ^= datetime_to.GetHashCode();
-            //hash ^= subject_id.GetHashCode();
-            hash ^= subject_name.GetHashCode();
-            //hash ^= content_name.GetHashCode();
-            foreach (var task in tasks)
-            {
-                hash ^= task.GetHashCode();
-            }
-            return hash;
-        }*/
+
 
         public IEnumerable<Task> GetDiffs(Item other)
         {
@@ -199,11 +144,6 @@ public int total_items { get; set; }*/
         /*public object task_code { get; set; }
         public string task_kind_code { get; set; }
         public string task_kind_name { get; set; }*/
-
-        /*public override int GetHashCode()
-        {
-            return task_name.GetHashCode();
-        }*/
 
     }
 
