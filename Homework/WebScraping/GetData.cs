@@ -69,6 +69,7 @@ namespace WebScraping
                 */
 
                 var p = await browser.NewPageAsync();
+                p.DefaultTimeout = 120000;
                 /* Дальше повторяем заход на сайт, так как
                  * периодически могут повторяться проблемы
                  * с SSL, в результате чего сайт может
@@ -256,9 +257,9 @@ namespace WebScraping
                                 // Здесь ошибка! в diffsFileAsRoot
                                 var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
                                 var diffsFileAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
-                                
-                                bool Equals = diffsFileAsRoot.ifEquals(result);
 
+                                bool Equals = false;//diffsFileAsRoot.ifEquals(result);
+                                //Здесь пока недоделанные работы
                                 
                                 if (!Equals)
                                 {

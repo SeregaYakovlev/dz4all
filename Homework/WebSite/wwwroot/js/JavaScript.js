@@ -1,6 +1,7 @@
 ﻿window.onerror = function (message, url, lineNumber) {
     var browser = navigator.userAgent;
-    var msg = "Сообщение: " + message + "\n" + "Браузер: " + browser + "\n(" + url + ":" + lineNumber + ")";
+    console.log("Сообщение: " + message + "\n" + "Браузер: " + browser + "\n(" + url + ":" + lineNumber + ")");
+    var msg = "Сообщение: " + message + "\r\n" + "Браузер: " + browser + "\r\n(" + url + ":" + lineNumber + ")";
     SendToServerAboutError(msg);
 }
 
@@ -126,16 +127,40 @@ function root() {
 }
 
 function hideEmptyTables() {
-    var table = document.getElementsByTagName("table");
-    for (var i = 0; i < table.length; i++) {
-        if (table[i].innerHTML === "<tbody><tr></tr></tbody>") {
-            table[i].style.display = "none";
+    hideTables();
+    function hideTables() {
+        var tables = document.getElementsByTagName("table");
+
+        for (var b = 0; b < tables.length; b++) {
+            var isTableEmpty = true;
+            for (var m = 0; m < tables[b].rows.length; m++) {
+                var isRowEmpty = checkIfCellsAreEmpty(tables[b].rows[m]);
+                if (!isRowEmpty) isTableEmpty = false;
+                else {
+                    tables[b].rows[m].style.display = "none";
+                }
+            }
+            if (isTableEmpty) {
+                tables[b].style.display = "none";
+            }
         }
+    }
+
+    function checkIfCellsAreEmpty(row) {
+        var cells = row.cells;
+        var isCellEmpty = false;
+        for (var j = 0; j < cells.length; j++) {
+            if (cells[j].innerHTML !== '') {
+                return isCellEmpty;
+            }
+        }
+        return !isCellEmpty;
     }
 }
 
+
 function SendToServerAboutError(error) {
-    console.log(error);
+    
     var xhr = new XMLHttpRequest();
     var host = window.location.origin + "/ServicePages/JSErrors";
     xhr.open("POST", host, true);
