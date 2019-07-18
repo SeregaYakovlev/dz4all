@@ -75,11 +75,12 @@ public int total_items { get; set; }*/
         //public Identity identity { get; set; }
         public int number { get; set; }
         //private string dateTotal;
-
+        
         public string datetime_from { get; set; }
         //public string datetime_to { get; set; }
         //public int subject_id { get; set; }
         public string subject_name { get; set; }
+        
         public string updateTime
         {
             get
@@ -111,7 +112,7 @@ public int total_items { get; set; }*/
         {
             homeworkStatus = homeworkSt;
         }
-        //public string content_name { get; set; }
+        public string content_name { get; set; }
         public Task[] tasks { get; set; }
         //public Estimate[] estimates { get; set; }
 

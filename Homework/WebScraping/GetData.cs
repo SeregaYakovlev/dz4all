@@ -214,9 +214,6 @@ namespace WebScraping
                     string fileName = $"{files.Count()}.json";
                     var path = Path.Combine(currentWeekPath, fileName);
 
-                    /*await File.WriteAllTextAsync(path, jsonContentAsAString);
-                    Log.Information($"Файл создан: {fileName}");*/
-
                     var lastFile = new DirectoryInfo(currentWeekPath)
                                         .GetFiles()
                                         .OrderByDescending(fi => fi.CreationTime)
@@ -234,29 +231,27 @@ namespace WebScraping
                         var result = oldTree.GetDiffs(newTree);
                         // Item1(old) - файлы, Item2(@new) - электронный дневник
 
-                        string diffsDirectory = @"C:\Users\Serega\Desktop\Publish\Diffs";
-                        EnsureDirectoryExists(diffsDirectory);
-                        if (result.Any()) // РАЗОБРАТЬСЯ С ЭТИМ!!!
+                        string currentDiffsFile = Path.Combine(currentWeekPath, "diffs.json");
+                        if (result.Any())
                         {
-                            var diffsDirectoryFiles = Directory.GetFiles(diffsDirectory);
-                            if (diffsDirectoryFiles.Count() == 0)
+                            var currentDiffsDirectoryFile = Directory.GetFiles(currentWeekPath, "diffs.json");
+                            if (!currentDiffsDirectoryFile.Any())
                             {
                                 var convertToJson = JsonConvert.SerializeObject(result);
-                                var diffDirectoryPath = Path.Combine(diffsDirectory, "diffs.json");
-                                await File.WriteAllTextAsync(diffDirectoryPath, convertToJson);
+                                await File.WriteAllTextAsync(currentDiffsFile, convertToJson);
                             }
                             else
                             {
-                                var diffsFile = Directory.GetFiles(diffsDirectory)[0];
+                                
                                 string readedDiffsFile;
                                 
-                                using (var reader = new StreamReader(diffsFile))
+                                using (var reader = new StreamReader(currentDiffsDirectoryFile.Single()))
                                 {
                                     readedDiffsFile = await reader.ReadToEndAsync();
                                 }
-                                // Здесь ошибка! в diffsFileAsRoot
+                                // Здесь ошибка! в diffsFileAsRoot(must be as JObject, not JArray);
                                 var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-                                var diffsFileAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
+                                //var diffsFileAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
 
                                 bool Equals = false;//diffsFileAsRoot.ifEquals(result);
                                 //Здесь пока недоделанные работы
@@ -266,12 +261,14 @@ namespace WebScraping
                                     var newObj = parsedFile.Concat(result);
                                     var newJson = JsonConvert.SerializeObject(newObj);
 
-                                    var diffDirectoryPath = Path.Combine(diffsDirectory, "diffs.json");
-                                    await File.WriteAllTextAsync(diffDirectoryPath, newJson);
+                                    
+                                    await File.WriteAllTextAsync(currentDiffsFile, newJson);
                                 }
                             }
                         }
                     }
+                    await File.WriteAllTextAsync(path, jsonContentAsAString);
+                    Log.Information($"Файл создан: {fileName}");
                 }
                 Log.Information("Скрипт выполнен успешно!");
                 Log.CloseAndFlush(); /*отправляем логи на сервер логов*/

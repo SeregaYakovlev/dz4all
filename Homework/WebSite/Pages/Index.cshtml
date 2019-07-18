@@ -231,33 +231,49 @@
                                 foreach (var jsonObjects in diffsJson)
                                 {
                                     var item2 = jsonObjects["Item2"];
+                                    var item1 = jsonObjects["Item1"];
                                     if (item2.Any())
                                     {
                                         var subjectName = item2["subject_name"].ToString();
                                         var datetime = item2["datetime_from"].ToString();
-                                        var updateTime = item2["updateTime"].ToString();
+                                        var updateTime = DateTime.ParseExact(item2["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                         var status = item2["SubjectStatus"].ToString();
                                         var homeworkStatus = item2["HomeworkStatus"].ToString();
-                                        var tasksInDiffs = item2["tasks"];
+                                        
 
                                         if (subjectName == subject && datetime == datetimeFrom)
                                         {
                                             if (status == "new" && tasks.Any())
                                             {
                                                 <br />
-                                                <span>Домашка появилась @updateTime</span>
+                                                <span class="dzAdded">Домашка появилась @updateTime</span>
                                                 /*ВАЖНО!!! Если несколько одинаковых данных в разных jsonObjects
                                                  * то напишется несколько <span>!!!.*/
                                             }
-                                            else if (!tasks.Any() && tasksInDiffs.Any())
+                                            else if (!tasks.Any() && item2["tasks"].Any())
                                             {
                                                 <br />
-                                                <span>Домашка удалена @updateTime</span>
+                                                <span class="dzDeleted">Домашка удалена @updateTime</span>
+                                                foreach(var task in item2["tasks"])
+                                                {
+                                                    <br />
+                                                    <span class="dzDeleted">@task.ToString()</span>
+                                                }
                                             }
                                             else if (homeworkStatus == "changed")
                                             {
-                                                <br />
-                                                <span>Домашка изменена @updateTime</span>
+
+                                                if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
+                                                {
+                                                    <br />
+                                                    <span class="dzChanged">Домашка изменена @updateTime</span>
+                                                }
+                                                else if(status != "new" && tasks.Any())
+                                                {
+                                                    <br />
+                                                    <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>
+                                                }
+                                                
                                             }
                                         }
                                     }
@@ -278,20 +294,23 @@
                             {
                                 var weekDate = DateTime.ParseExact(week.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                 var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                @Html.Raw("<td>");
+                                @Html.Raw("<td class='dzDeleted'>");
                                 if (weekDate == delDate)
                                 {
                                     //@Html.Raw("<td>");
                                     var subject = item1["subject_name"].ToString();
-                                    var updateTime = item1["updateTime"].ToString();
+                                    var lesson_content = item1["lesson_content"].ToString();
+                                    var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                     var tasks = item1["tasks"];
-                                    <span>Предмет удалён!</span>
+                                    <span>Предмет с домашкой удалён @updateTime</span>
+                                    <br />
                                     <span>@subject</span>
                                     <br />
-                                    <span>@updateTime</span>
+                                    <span>@lesson_content</span>
                                     foreach (var task in tasks)
                                     {
-                                        <span>@task["task_name"].ToString()</span>
+                                        <br />
+                                        <span>Дз: @task["task_name"].ToString()</span>
                                     }
                                 }
                                 @Html.Raw("</td>");
