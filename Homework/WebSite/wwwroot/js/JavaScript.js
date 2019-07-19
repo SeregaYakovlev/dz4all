@@ -8,9 +8,10 @@
 document.addEventListener("DOMContentLoaded", function () {
     ifCookiesEnabled();
     checkAutorization();
-    set_checkbox();
+    setCheckboxLessonContent();
+    setCheckboxHomeworkNotifications();
     root();
-    hideEmptyTables();
+    hideEmptyElements();
 })
 
 function ifCookiesEnabled() {
@@ -93,8 +94,8 @@ function lessonContent(param) {
     }
 }
 
-function set_checkbox() {
-    var checkboxValue = getCookie("checkbox");
+function setCheckboxLessonContent() {
+    var checkboxValue = getCookie("checkboxLessonContent");
     if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
         lessonContent("inline");
     }
@@ -105,13 +106,56 @@ function set_checkbox() {
         var checked = this.checked;
         if (checked === true) {
             lessonContent("inline");
-            DeleteCookie("checkbox");
-            SetCookie("checkbox", "on", 30);
+            DeleteCookie("checkboxLessonContent");
+            SetCookie("checkboxLessonContent", "on", 30);
         }
         else {
             lessonContent("none");
-            DeleteCookie("checkbox");
-            SetCookie("checkbox", "off", 30);
+            DeleteCookie("checkboxLessonContent");
+            SetCookie("checkboxLessonContent", "off", 30);
+        }
+    }
+}
+
+function homeworkNotifications(param1, param2) {
+    var checkbox = document.getElementById("ShowHomeworkNotifications");
+    var homeworkNotifications = document.querySelectorAll(".dzAdded, .dzChanged, .dzDeleted");
+    var delSubjectCells = document.querySelectorAll(".delSubjectCell");
+
+    for (var i = 0; i < homeworkNotifications.length; i++) {
+        homeworkNotifications[i].style.display = param1;
+    }
+    for (var k = 0; k < delSubjectCells.length; k++) {
+        delSubjectCells[k].style.display = param2;
+    }
+
+    if (param1 === "inline") {
+        checkbox.checked = true;
+    }
+    else {
+        checkbox.checked = false;
+    }
+}
+
+function setCheckboxHomeworkNotifications() {
+    var checkboxValue = getCookie("checkboxHomeworkNotifications");
+    if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
+        homeworkNotifications("inline", "");
+    }
+    else {
+        homeworkNotifications("none", "none");
+    }
+    document.getElementById("ShowHomeworkNotifications").onchange = function () {
+        var checked = this.checked;
+        if (checked === true) {
+            homeworkNotifications("inline", "");
+            DeleteCookie("checkboxHomeworkNotifications");
+            SetCookie("checkboxHomeworkNotifications", "on", 30);
+        }
+        else {
+            homeworkNotifications("none", "none");
+            DeleteCookie("checkboxHomeworkNotifications");
+            SetCookie("checkboxHomeworkNotifications", "off", 30);
         }
     }
 }
@@ -126,8 +170,20 @@ function root() {
     }
 }
 
-function hideEmptyTables() {
+function hideEmptyElements() {
     hideTables();
+    deleteEmptyPaintedElements();
+    function deleteEmptyPaintedElements() {
+        var delElements = document.getElementsByClassName("delSubjectCell");
+        var delElement;
+        for (var x = 0; x < delElements.length; x++) {
+            delElement = delElements[x];
+            if (delElement.textContent === "") {
+                delElement.classList.remove("delSubjectCell");
+                x--;
+            }
+        }
+    }
     function hideTables() {
         var tables = document.getElementsByTagName("table");
 
@@ -160,7 +216,7 @@ function hideEmptyTables() {
 
 
 function SendToServerAboutError(error) {
-    
+
     var xhr = new XMLHttpRequest();
     var host = window.location.origin + "/ServicePages/JSErrors";
     xhr.open("POST", host, true);

@@ -112,10 +112,14 @@ td, th {
 }
 
 .dzChanged {
-    color: #0047AB/*#FF4500*/;
+    color: #0047AB;
     font-style: normal;
     font-stretch: normal;
     font-weight: 400;
     line-height: normal;
     font-family: Roboto-bold,sans-serif;
+}
+
+.delSubjectCell {
+    background-color: #FFFDD0;
 }
