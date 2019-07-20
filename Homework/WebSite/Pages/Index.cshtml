@@ -98,6 +98,7 @@
                 var lastFile = new DirectoryInfo(currentWeekDir)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
+                                    .Where(file => file.Name != "diffs.json")
                                     .FirstOrDefault();
 
                 if (lastFile != null)
@@ -260,7 +261,7 @@
                                 {
                                     var weekDate = DateTime.ParseExact(week.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                @Html.Raw("<td class='delSubjectCell'>");
+                                @Html.Raw("<td class='delSubjectCell painted'>");
                                     if (weekDate == delDate)
                                     {
                                         

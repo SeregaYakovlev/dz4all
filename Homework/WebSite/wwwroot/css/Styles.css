@@ -120,6 +120,7 @@ td, th {
     font-family: Roboto-bold,sans-serif;
 }
 
-.delSubjectCell {
+.painted {
+    /*относится к классу delSubjectCell*/
     background-color: #FFFDD0;
 }

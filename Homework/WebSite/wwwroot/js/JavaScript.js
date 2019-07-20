@@ -174,12 +174,12 @@ function hideEmptyElements() {
     hideTables();
     deleteEmptyPaintedElements();
     function deleteEmptyPaintedElements() {
-        var delElements = document.getElementsByClassName("delSubjectCell");
+        var delElements = document.getElementsByClassName("painted");
         var delElement;
         for (var x = 0; x < delElements.length; x++) {
             delElement = delElements[x];
             if (delElement.textContent === "") {
-                delElement.classList.remove("delSubjectCell");
+                delElement.classList.remove("painted");
                 x--;
             }
         }

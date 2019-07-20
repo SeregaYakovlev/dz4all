@@ -217,6 +217,7 @@ namespace WebScraping
                     var lastFile = new DirectoryInfo(currentWeekPath)
                                         .GetFiles()
                                         .OrderByDescending(fi => fi.CreationTime)
+                                        .Where(file => file.Name != "diffs.json")
                                         .FirstOrDefault();
 
                     if (lastFile != null)
