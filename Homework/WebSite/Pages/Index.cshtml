@@ -227,12 +227,12 @@
                                                 else if (homeworkStatus == "changed")
                                                 {
 
-                                                    if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
+                                                    if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
                                                     {
                                                     <br />
                                                     <span class="dzChanged">Домашка изменена @updateTime</span>
                                                     }
-                                                    else if (status != "new" && tasks.Any())
+                                                    else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
                                                     {
                                                     <br />
                                                     <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>

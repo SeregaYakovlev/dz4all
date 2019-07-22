@@ -243,26 +243,61 @@ namespace WebScraping
                             }
                             else
                             {
-                                
                                 string readedDiffsFile;
-                                
+
                                 using (var reader = new StreamReader(currentDiffsDirectoryFile.Single()))
                                 {
                                     readedDiffsFile = await reader.ReadToEndAsync();
                                 }
-                                // Здесь ошибка! в diffsFileAsRoot(must be as JObject, not JArray);
-                                var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-                                //var diffsFileAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
-
-                                bool Equals = false;//diffsFileAsRoot.ifEquals(result);
-                                //Здесь пока недоделанные работы
                                 
-                                if (!Equals)
-                                {
-                                    var newObj = parsedFile.Concat(result);
-                                    var newJson = JsonConvert.SerializeObject(newObj);
+                                var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
+                                var concatedObj = parsedFile.Concat(result);
 
-                                    
+                                var dateTimeList = new List<DateTime>();
+                                foreach (var items in concatedObj)
+                                {
+                                    string dateTime1;
+                                    string dateTime2;
+                                    DateTime dateTime1AsDateTime;
+                                    DateTime dateTime2AsDateTime;
+                                    if (items.Item1 != null)
+                                    {
+                                        dateTime1 = items.Item1.datetime_from;
+                                        dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
+                                        dateTimeList.Add(dateTime1AsDateTime);
+                                    }
+                                    if (items.Item2 != null)
+                                    {
+                                        dateTime2 = items.Item2.datetime_from;
+                                        dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
+                                        dateTimeList.Add(dateTime2AsDateTime);
+                                    }
+                                }
+                                var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+
+                                var item1 = parsedFile.Where(time =>
+                                {
+                                    if (time.Item1 != null)
+                                    {
+                                        var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                        return timeAsDateTime >= maxDateTimeSaved;
+                                    }
+                                    else return false;
+                                });
+                                var item2 = parsedFile.Where(time =>
+                                {
+                                    if (time.Item2 != null)
+                                    {
+                                        var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                        return timeAsDateTime >= maxDateTimeSaved;
+                                    }
+                                    else return false;
+                                });
+                                var newData = JsonConvert.SerializeObject(item1.Concat(item2));
+                                
+                                if (newData.Any())
+                                {
+                                    var newJson = JsonConvert.SerializeObject(newData);
                                     await File.WriteAllTextAsync(currentDiffsFile, newJson);
                                 }
                             }
