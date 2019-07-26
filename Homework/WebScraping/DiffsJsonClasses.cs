@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,9 +11,9 @@ namespace WebScraping
     {
         public Items[] items { get; set; }
         
-        internal bool ifEquals(IEnumerable<(Item, Item)> oldData)
+        internal bool ifEquals(IEnumerable newData)
         {
-            return oldData.Equals(items);
+            return newData.Equals(items);
         }
     }
 
@@ -32,13 +33,13 @@ namespace WebScraping
         //public string updateTime { get; set; }
         public object SubjectStatus { get; set; }
         public string HomeworkStatus { get; set; }
-        //public Task1[] tasks { get; set; }
+        public Task1[] tasks { get; set; }
     }
 
-    /*public class Task1
+    public class Task1
     {
         public string task_name { get; set; }
-    }*/
+    }
 
     public class Item2
     {
@@ -48,12 +49,12 @@ namespace WebScraping
         //public string updateTime { get; set; }
         public string SubjectStatus { get; set; }
         public string HomeworkStatus { get; set; }
-        //public Task2[] tasks { get; set; }
+        public Task2[] tasks { get; set; }
     }
 
-    /*public class Task2
+    public class Task2
     {
         public string task_name { get; set; }
-    }*/
+    }
 
 }

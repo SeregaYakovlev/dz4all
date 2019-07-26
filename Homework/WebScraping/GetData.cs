@@ -249,8 +249,14 @@ namespace WebScraping
                                 {
                                     readedDiffsFile = await reader.ReadToEndAsync();
                                 }
-                                
+
                                 var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
+                                //var fileParsedAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
+                                string objects = JsonConvert.DeserializeObject<JArray>(readedDiffsFile).ToObject<List<JObject>>().ToString();
+                                var objectsAsRoot = JsonConvert.DeserializeObject<Root>(objects);
+                                //bool isEquals = objAsRoot.ifEquals(result);
+                                // Ошибка jarray can not be deserialized.
+                                
                                 var concatedObj = parsedFile.Concat(result);
 
                                 var dateTimeList = new List<DateTime>();
@@ -294,7 +300,7 @@ namespace WebScraping
                                     else return false;
                                 });
                                 var newData = JsonConvert.SerializeObject(item1.Concat(item2));
-                                
+
                                 if (newData.Any())
                                 {
                                     var newJson = JsonConvert.SerializeObject(newData);
