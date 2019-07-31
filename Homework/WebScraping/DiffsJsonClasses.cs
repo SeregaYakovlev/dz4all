@@ -1,28 +1,33 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
 namespace WebScraping
 {
-
-    public class Root
+    public class MainObject
     {
-        public Items[] items { get; set; }
-        
-        internal bool ifEquals(IEnumerable newData)
+        public Array[] array { get; set; }
+        // array у текущей переменной result in GetData.cs
+        internal bool ifEquals(MainObject diffsFile)
         {
-            return newData.Equals(items);
+            bool equals;
+            foreach(var index1 in array) // in result
+            {
+                foreach(var index2 in diffsFile.array) // in Diffs.json file
+                {
+                    equals = Equals(index1, index2);
+                    if (equals == true)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 
-    public class Items
+    public class Array
     {
         public Item1 Item1 { get; set; }
         public Item2 Item2 { get; set; }
-
-        
     }
 
     public class Item1
@@ -31,8 +36,9 @@ namespace WebScraping
         public string datetime_from { get; set; }
         public string subject_name { get; set; }
         //public string updateTime { get; set; }
-        public object SubjectStatus { get; set; }
-        public string HomeworkStatus { get; set; }
+        public string SubjectStatus { get; set; }
+        public object HomeworkStatus { get; set; }
+        //public string content_name { get; set; }
         public Task1[] tasks { get; set; }
     }
 
@@ -48,7 +54,8 @@ namespace WebScraping
         public string subject_name { get; set; }
         //public string updateTime { get; set; }
         public string SubjectStatus { get; set; }
-        public string HomeworkStatus { get; set; }
+        public object HomeworkStatus { get; set; }
+        //public string content_name { get; set; }
         public Task2[] tasks { get; set; }
     }
 
@@ -56,5 +63,4 @@ namespace WebScraping
     {
         public string task_name { get; set; }
     }
-
 }

@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace WebScraping
 {
@@ -252,11 +253,25 @@ namespace WebScraping
 
                                 var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
                                 //var fileParsedAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
-                                string objects = JsonConvert.DeserializeObject<JArray>(readedDiffsFile).ToObject<List<JObject>>().ToString();
-                                var objectsAsRoot = JsonConvert.DeserializeObject<Root>(objects);
-                                //bool isEquals = objAsRoot.ifEquals(result);
-                                // Ошибка jarray can not be deserialized.
+                                //var objects = JsonConvert.DeserializeObject<JArray>(readedDiffsFile).ToObject<List<JObject>>();
+
+                                var objResult = new JObject();
+                                var resultAsJson = JsonConvert.SerializeObject(result);
+                                objResult.Add("array", JArray.Parse(resultAsJson));
+                                string objResultAsString = JsonConvert.SerializeObject(objResult);
+                                Console.Write(objResultAsString);
                                 
+                                var objDiffs = new JObject();
+                                
+                                objDiffs.Add("array", JArray.Parse(readedDiffsFile));
+                                string objDiffsAsString = JsonConvert.SerializeObject(objDiffs);
+                                Console.Write(objDiffsAsString);
+                                //await File.WriteAllTextAsync(@"C:\Users\Serega\Desktop\result.json", objDiffsAsString);
+
+                                var resultAsMainObj = JsonConvert.DeserializeObject<MainObject>(objResultAsString);
+                                var diffsAsMainObj = JsonConvert.DeserializeObject<MainObject>(objDiffsAsString);
+                                bool equals = resultAsMainObj.ifEquals(diffsAsMainObj);
+
                                 var concatedObj = parsedFile.Concat(result);
 
                                 var dateTimeList = new List<DateTime>();
@@ -336,6 +351,7 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
+
 
         #region Методы для отладочной хрени
         /*
