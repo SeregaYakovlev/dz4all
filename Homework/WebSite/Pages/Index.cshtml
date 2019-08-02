@@ -6,8 +6,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-    <meta name="viewport" content="width=device-width" innitial-scale="0.1" maximum-scale="1" />
     <title>Homework</title>
     <link rel="stylesheet" href="~/css/Styles.css" />
     <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
@@ -40,7 +38,7 @@
     <noscript>
         <div class="announcement">
             <p>
-                <strong class="attention">Внимание!</strong>
+                <strong>Внимание!</strong>
                 <br />
                 Для работы требуются:
                 <br />
@@ -75,8 +73,11 @@
         затем обратно на сайт.
     </p>
     <div id="content">
-        <form>
-            <input type="checkbox" id="ShowLessonContent" />Показывать темы уроков<br />
+        <img src="~/img/optionsIcon.png" id="options" />
+        <form id="form">
+            <br />
+            <input type="checkbox" id="ShowLessonContent" />Показывать темы уроков
+            <br />
             <input type="checkbox" id="ShowHomeworkNotifications" />Показывать события домашки
         </form>
         @using System.IO;
@@ -93,6 +94,8 @@
             }
 
             var currentWeekDirectories = Directory.GetDirectories(pathToDataDirectory);
+            int tableCount = 0;
+            bool isData = false;
             foreach (var currentWeekDir in currentWeekDirectories)
             {
                 var lastFile = new DirectoryInfo(currentWeekDir)
@@ -114,16 +117,20 @@
                         }
                         diffsJson = JArray.Parse(readedDiffsFile);
                     }
-                    
+
                     //int tdCount = 0;
                     @Html.Raw("<table>");
-                    string readedFile;
 
+                    string readedFile;
                     using (var reader = new StreamReader(lastFile.FullName))
                     {
                         readedFile = reader.ReadToEnd();
                     }
 
+                    var tableUpdatedTime = System.IO.File.GetLastWriteTime(lastFile.FullName);
+                    <caption>
+                        <p>Обновлено @tableUpdatedTime.ToString("d.MM H:mm")</p>
+                    </caption>
                     // Начинаем парсить json
                     //
 
@@ -144,6 +151,10 @@
                     // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
 
                     @Html.Raw("<tr>");
+                    if (itemsGroupedByWeeksDay.Any())
+                    {
+                        isData = true;
+                    }
                     foreach (var weekDayItems in itemsGroupedByWeeksDay)
                     {
                         var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
@@ -209,19 +220,19 @@
                                             {
                                                 if (status == "new" && tasks.Any())
                                                 {
-                                                <br />
-                                                <span class="dzAdded">Домашка появилась @updateTime</span>
+                                                    <br />
+                                                    <span class="dzAdded">Домашка появилась @updateTime</span>
                                                     /*ВАЖНО!!! Если несколько одинаковых данных в разных jsonObjects
                                                      * то напишется несколько <span>!!!.*/
                                                 }
                                                 else if (!tasks.Any() && item2["tasks"].Any())
                                                 {
-                                                <br />
-                                                <span class="dzDeleted">Домашка удалена @updateTime</span>
+                                                    <br />
+                                                    <span class="dzDeleted">Домашка удалена @updateTime</span>
                                                     foreach (var task in item2["tasks"])
                                                     {
-                                                    <br />
-                                                    <span class="dzDeleted">@task.ToString()</span>
+                                                        <br />
+                                                        <span class="dzDeleted">@task.ToString()</span>
                                                     }
                                                 }
                                                 else if (homeworkStatus == "changed")
@@ -229,13 +240,13 @@
 
                                                     if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
                                                     {
-                                                    <br />
-                                                    <span class="dzChanged">Домашка изменена @updateTime</span>
+                                                        <br />
+                                                        <span class="dzChanged">Домашка изменена @updateTime</span>
                                                     }
                                                     else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
                                                     {
-                                                    <br />
-                                                    <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>
+                                                        <br />
+                                                        <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>
                                                     }
 
                                                 }
@@ -256,79 +267,62 @@
                             var item1 = delObjects["Item1"];
                             if (item1.Any() && item1["SubjectStatus"].ToString() == "deleted" && item1["tasks"].Any())
                             {
-                            @Html.Raw("<tr>");
+                                @Html.Raw("<tr>");
                                 foreach (var week in itemsGroupedByWeeksDay)
                                 {
                                     var weekDate = DateTime.ParseExact(week.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                @Html.Raw("<td class='delSubjectCell painted'>");
+                                    @Html.Raw("<td class='delSubjectCell painted'>");
                                     if (weekDate == delDate)
                                     {
-                                        
+
                                         var subject = item1["subject_name"].ToString();
                                         var lesson_content = item1["content_name"].ToString();
                                         var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                         var tasks = item1["tasks"];
-                                    <span class="dzDeleted">Предмет с домашкой удалён @updateTime</span>
-                                    <br />
-                                    <span class="subject">@subject</span>
-                                    <br />
-                                    <span class="lesson_content">@lesson_content</span>
+                                        <span class="dzDeleted">Предмет с домашкой удалён @updateTime</span>
+                                        <br />
+                                        <span class="subject">@subject</span>
+                                        <br />
+                                        <span class="lesson_content">@lesson_content</span>
                                         foreach (var task in tasks)
                                         {
-                                        <br class="br" />
-                                        <span class="homework">Дз: @task["task_name"].ToString()</span>
+                                            <br class="br" />
+                                            <span class="homework">Дз: @task["task_name"].ToString()</span>
                                         }
                                     }
-                                @Html.Raw("</td>");
+                                    @Html.Raw("</td>");
                                 }
-                            @Html.Raw("</tr>");
+                                @Html.Raw("</tr>");
                             }
                         }
                     }
+                    tableCount++;
                     @Html.Raw("</table>");
                 }
             }
 
-            /*if (files.Count() == 0)
+            if (tableCount == 0)
             {
-            <p class="announcement">
-                <strong class="attention">ВНИМАНИЕ!</strong>
-                <br />
-                Данных нет.
-                <br />
-                Но это <strong class="attention">совсем не означает,</strong> что домашки нет.
-                <br />
-                Возможно, просто потерялись данные.
-            </p>
-            }
-            else
-            {
-            string thisWeek = System.IO.File.GetLastWriteTime(files[0]).ToString("dd.MM.yyyy HH:mm:ss");
-            <p class="fileModifiedTime">Эта неделя обновлена @thisWeek</p>
-            if (files.Count() > 1) // Если других файлов нет, то будет exception
-            {
-            string otherWeeks = System.IO.File.GetLastWriteTime(files[1]).ToString("dd.MM.yyyy HH:mm:ss");
-            <p class="fileModifiedTime">Остальные @otherWeeks</p>
-            }*/
-            <!-- #region create table-->
-            <!--#endregion-->
-            /*if (tdCount == 0)
-            {
-            <p class="announcement green">
-                @{
-                    List<System.DateTime> timeUpdateFiles = new List<System.DateTime>();
-                    for (int i = 0; i < files.Count(); i++)
-                    {
-                        var updateTime = System.IO.File.GetLastWriteTime(files[i]);
-                        timeUpdateFiles.Add(updateTime);
+                <p class="announcement">
+                    <strong>ВНИМАНИЕ!</strong>
+                    <br />
+                    <span>Данные на сервере отсутствуют.</span>
+                    <br />
+                    <span>Не удалось получить данные с электронного дневника.</span>
+                </p>
                     }
-                    var minTime = timeUpdateFiles.Min().ToString("dd.MM.yyyy HH:mm:ss");
-                }
-                Электронный дневник пустой с @minTime!
-            </p>
-            }*/
-            //}
+                    else if (isData == false)
+                    {
+                        var updateTimeList = new List<DateTime>();
+                        foreach(var curWeekdirectory in currentWeekDirectories)
+                        {
+                            var currentDirectoryUpdateTime = System.IO.Directory.GetLastWriteTime(curWeekdirectory);
+                            updateTimeList.Add(currentDirectoryUpdateTime);
+                        }
+                        var minTime = updateTimeList.Min().ToString("d.MM H:mm");
+                <p class="announcement">Электронный дневник пустой c @minTime</p>
+            }
         }
     </div>
 </body>

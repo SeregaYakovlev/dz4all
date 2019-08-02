@@ -70,15 +70,14 @@ namespace WebScraping
                 */
 
                 var p = await browser.NewPageAsync();
-                p.DefaultTimeout = 120000;
                 /* Дальше повторяем заход на сайт, так как
                  * периодически могут повторяться проблемы
                  * с SSL, в результате чего сайт может
                  * не загрузиться. */
 
                 bool success = false;
-                int initiatingCount = 0;
-                while (initiatingCount < 10 && !success)
+                int connectCount = 0;
+                while (connectCount < 10 && !success)
                 {
                     try
                     {
@@ -90,9 +89,9 @@ namespace WebScraping
                     {
                         Log.Error(e, "GoToAsync({Site} failed", "https://petersburgedu.ru");
                         Log.Information("Подключение к сайту {Site}: Ошибка, повторяю...", "https://petersburgedu.ru");
-                        Log.Information("Попытка № {attempt}", initiatingCount + 1);
+                        Log.Information("Попытка № {attempt}", connectCount + 1);
                         await System.Threading.Tasks.Task.Delay(3000);
-                        initiatingCount++;
+                        connectCount++;
                     }
                 }
 
@@ -131,34 +130,20 @@ namespace WebScraping
 
                 p = await GetPage(browser, "https://dnevnik2.petersburgedu.ru");
 
-                /*WaitForNavigation срабатывает не всегда,
-                 * поэтому надеямся, что загрузились и куку получили.
-                 */
-                try
-                {
-                    await p.WaitForNavigationAsync(new NavigationOptions
-                    {
-                        WaitUntil = new[] {
-                        WaitUntilNavigation.Networkidle0
-                    },
-                        Timeout = 60000
-                    });
-                }
-                catch (TimeoutException)
-                {
-                    Log.Error("WaitForNavigation failed");
-                }
-
                 /* Куки нужны для того, чтобы сайт меня опознал
                  * при отправке http-запроса на сервер эл. дневника */
-                var cookies = await p.GetCookiesAsync();
+
                 Cookie cookie;
+                int forCount = 0;
                 do
                 {
+                    if (forCount > 10) throw new Exception("cookie X-JMT-Token is not present");
                     await System.Threading.Tasks.Task.Delay(1000);
+                    var cookies = await p.GetCookiesAsync();
                     cookie = cookies.Where(c => c.Name == "X-JWT-Token").Select(c => new Cookie(c.Name, c.Value)).Single();
+                    forCount++;
                 }
-                while (cookie.Value == "");
+                while (cookie.Value == "" || cookie == null);
 
                 //Здесь и далее безголовый браузер уже не нужен
                 await browser.CloseAsync();
@@ -260,13 +245,11 @@ namespace WebScraping
                                 objResult.Add("array", JArray.Parse(resultAsJson));
                                 string objResultAsString = JsonConvert.SerializeObject(objResult);
                                 Console.Write(objResultAsString);
-                                
+
                                 var objDiffs = new JObject();
-                                
                                 objDiffs.Add("array", JArray.Parse(readedDiffsFile));
                                 string objDiffsAsString = JsonConvert.SerializeObject(objDiffs);
                                 Console.Write(objDiffsAsString);
-                                //await File.WriteAllTextAsync(@"C:\Users\Serega\Desktop\result.json", objDiffsAsString);
 
                                 var resultAsMainObj = JsonConvert.DeserializeObject<MainObject>(objResultAsString);
                                 var diffsAsMainObj = JsonConvert.DeserializeObject<MainObject>(objDiffsAsString);
@@ -296,7 +279,7 @@ namespace WebScraping
                                 }
                                 var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
 
-                                var item1 = parsedFile.Where(time =>
+                                var item1 = concatedObj.Where(time =>
                                 {
                                     if (time.Item1 != null)
                                     {
@@ -305,7 +288,7 @@ namespace WebScraping
                                     }
                                     else return false;
                                 });
-                                var item2 = parsedFile.Where(time =>
+                                var item2 = concatedObj.Where(time =>
                                 {
                                     if (time.Item2 != null)
                                     {
@@ -318,8 +301,7 @@ namespace WebScraping
 
                                 if (newData.Any())
                                 {
-                                    var newJson = JsonConvert.SerializeObject(newData);
-                                    await File.WriteAllTextAsync(currentDiffsFile, newJson);
+                                    await File.WriteAllTextAsync(currentDiffsFile, newData);
                                 }
                             }
                         }
@@ -340,6 +322,7 @@ namespace WebScraping
                 await System.Threading.Tasks.Task.Delay(1000);
             } while (!pages.Any(p2 => p2.Url.StartsWith(url)));
             var page = pages.Single(p2 => p2.Url.StartsWith(url));
+            page.DefaultTimeout = 120 * 1000;
             page.DefaultNavigationTimeout = 120 * 1000;
             return page;
         }
@@ -351,7 +334,6 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
-
 
         #region Методы для отладочной хрени
         /*

@@ -16,32 +16,39 @@ td, th {
     vertical-align: top;
 }
 
+caption {
+    margin-bottom: -15px;
+    text-align: left;
+    margin-left: 8px;
+}
+
 #siteInfo {
     color: blue;
     text-align: center;
     margin-top: 0px;
+    margin-bottom: -10px;
 }
 
 #content {
     display: none;
 }
+
+#form {
+    display: none;
+}
+
+#options {
+    width: 3%;
+    margin-top: -60px;
+}
+
 .fileModifiedTime {
     text-align: center;
 }
 
-.attention {
-    color: red;
-}
-
 .announcement {
     text-align: center;
-}
-
-.orange {
-    color: orange;
-}
-.green {
-    color: yellowgreen;
+    color: brown;
 }
 
 .dayWeek {

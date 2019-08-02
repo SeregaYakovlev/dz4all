@@ -8,11 +8,25 @@
 document.addEventListener("DOMContentLoaded", function () {
     ifCookiesEnabled();
     checkAutorization();
+    options();
     setCheckboxLessonContent();
     setCheckboxHomeworkNotifications();
     root();
     hideEmptyElements();
 })
+
+function options() {
+    document.getElementById("options").onclick = function () {
+        var options = document.getElementById("form");
+        var visible = options.style.display;
+        if (visible !== "inline") {
+            options.style.display = "inline";
+        }
+        else {
+            options.style.display = "none";
+        }
+    }
+}
 
 function ifCookiesEnabled() {
     console.log("ifCookiesEnabled");
@@ -20,9 +34,9 @@ function ifCookiesEnabled() {
     console.log(cookiesEnabled);
     if (!cookiesEnabled) {
         var para = document.createElement("p");
-        para.innerHTML = `Файлы cookies выключены. Это нарушает работу сайта.`;
+        para.innerHTML = `Файлы cookies выключены. Некоторые функции могут не работать.`;
         document.getElementsByTagName("header")[0].appendChild(para);
-        para.className = "announcement orange";
+        para.className = "announcement";
     }
 }
 
