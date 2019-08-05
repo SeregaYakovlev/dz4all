@@ -1,0 +1,16 @@
+				/*var objResult = new JObject();
+                                var resultAsJson = JsonConvert.SerializeObject(result);
+                                objResult.Add("array", JArray.Parse(resultAsJson));
+                                string objResultAsString = JsonConvert.SerializeObject(objResult);
+                                Console.Write(objResultAsString);
+
+                                var objDiffs = new JObject();
+                                objDiffs.Add("array", JArray.Parse(readedDiffsFile));
+                                string objDiffsAsString = JsonConvert.SerializeObject(objDiffs);
+                                Console.Write(objDiffsAsString);
+
+                                var resultAsMainObj = JsonConvert.DeserializeObject<MainObject>(objResultAsString);
+                                var diffsAsMainObj = JsonConvert.DeserializeObject<MainObject>(objDiffsAsString);
+                                var onlyDifferentElements = resultAsMainObj.DeleteTheSameElements(diffsAsMainObj);
+
+                                result = onlyDifferentElements;*/

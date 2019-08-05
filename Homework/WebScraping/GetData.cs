@@ -196,8 +196,7 @@ namespace WebScraping
                     }
                     string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                     EnsureDirectoryExists(currentWeekPath);
-                    var files = new DirectoryInfo(currentWeekPath).GetFiles();
-                    string fileName = $"{files.Count()}.json";
+                    string fileName = "0.json";
                     var path = Path.Combine(currentWeekPath, fileName);
 
                     var lastFile = new DirectoryInfo(currentWeekPath)
@@ -237,23 +236,6 @@ namespace WebScraping
                                 }
 
                                 var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-                                //var fileParsedAsRoot = JsonConvert.DeserializeObject<Root>(readedDiffsFile);
-                                //var objects = JsonConvert.DeserializeObject<JArray>(readedDiffsFile).ToObject<List<JObject>>();
-
-                                var objResult = new JObject();
-                                var resultAsJson = JsonConvert.SerializeObject(result);
-                                objResult.Add("array", JArray.Parse(resultAsJson));
-                                string objResultAsString = JsonConvert.SerializeObject(objResult);
-                                Console.Write(objResultAsString);
-
-                                var objDiffs = new JObject();
-                                objDiffs.Add("array", JArray.Parse(readedDiffsFile));
-                                string objDiffsAsString = JsonConvert.SerializeObject(objDiffs);
-                                Console.Write(objDiffsAsString);
-
-                                var resultAsMainObj = JsonConvert.DeserializeObject<MainObject>(objResultAsString);
-                                var diffsAsMainObj = JsonConvert.DeserializeObject<MainObject>(objDiffsAsString);
-                                bool equals = resultAsMainObj.ifEquals(diffsAsMainObj);
 
                                 var concatedObj = parsedFile.Concat(result);
 
@@ -305,6 +287,13 @@ namespace WebScraping
                                 }
                             }
                         }
+                    }
+                    var currentWeekDirectoryFiles = new DirectoryInfo(currentWeekPath)
+                        .GetFiles();
+                    var needToDelete = currentWeekDirectoryFiles.Where(file => file.Name != "diffs.json");
+                    foreach(var file in needToDelete)
+                    {
+                        File.Delete(file.FullName);
                     }
                     await File.WriteAllTextAsync(path, jsonContentAsAString);
                     Log.Information($"Файл создан: {fileName}");

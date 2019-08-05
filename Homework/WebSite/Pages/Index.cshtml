@@ -73,12 +73,14 @@
         затем обратно на сайт.
     </p>
     <div id="content">
-        <img src="~/img/optionsIcon.png" id="options" />
+        <img src="~/img/optionsIcon.png" alt="Настройки" id="options"/>
         <form id="form">
             <br />
             <input type="checkbox" id="ShowLessonContent" />Показывать темы уроков
             <br />
             <input type="checkbox" id="ShowHomeworkNotifications" />Показывать события домашки
+            <br />
+            <input type="checkbox" id="ShowDoneHomework" />Готовые дз
         </form>
         @using System.IO;
         @using Newtonsoft.Json.Linq;
@@ -311,16 +313,16 @@
                     <br />
                     <span>Не удалось получить данные с электронного дневника.</span>
                 </p>
-                    }
-                    else if (isData == false)
-                    {
-                        var updateTimeList = new List<DateTime>();
-                        foreach(var curWeekdirectory in currentWeekDirectories)
-                        {
-                            var currentDirectoryUpdateTime = System.IO.Directory.GetLastWriteTime(curWeekdirectory);
-                            updateTimeList.Add(currentDirectoryUpdateTime);
-                        }
-                        var minTime = updateTimeList.Min().ToString("d.MM H:mm");
+            }
+            else if (isData == false)
+            {
+                var updateTimeList = new List<DateTime>();
+                foreach (var curWeekdirectory in currentWeekDirectories)
+                {
+                    var currentDirectoryUpdateTime = System.IO.Directory.GetLastWriteTime(curWeekdirectory);
+                    updateTimeList.Add(currentDirectoryUpdateTime);
+                }
+                var minTime = updateTimeList.Min().ToString("d.MM H:mm");
                 <p class="announcement">Электронный дневник пустой c @minTime</p>
             }
         }

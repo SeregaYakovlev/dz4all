@@ -39,7 +39,6 @@ caption {
 
 #options {
     width: 3%;
-    margin-top: -60px;
 }
 
 .fileModifiedTime {
@@ -130,4 +129,8 @@ caption {
 .painted {
     /*относится к классу delSubjectCell*/
     background-color: #FFFDD0;
+}
+
+.HomeworkDone {
+    background-color: #00FF7F;
 }

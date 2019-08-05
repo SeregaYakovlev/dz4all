@@ -11,9 +11,116 @@ document.addEventListener("DOMContentLoaded", function () {
     options();
     setCheckboxLessonContent();
     setCheckboxHomeworkNotifications();
-    root();
+    setCheckboxDoneHomework();
+    //root();
     hideEmptyElements();
 })
+
+function setClickEventListener() {
+    var table = document.getElementsByTagName("table");
+    var row;
+    var cell;
+    var isHomework;
+    for (var i = 0; i < table.length; i++) {
+        for (var k = 1; k < table[i].rows.length; k++) {
+            row = table[i].rows[k];
+            for (var j = 0; j < row.cells.length; j++) {
+                cell = row.cells[j];
+                isHomework = cell.querySelector(".homework");
+                if (!cell.classList.contains("delSubjectCell") && cell.textContent !== "" && isHomework != null) {
+                    cell.onclick = function () {
+                        setHomeworkAsDoneOrDelete(this);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function removeClickEventListener() {
+    var table = document.getElementsByTagName("table");
+    var row;
+    var cell;
+    for (var i = 0; i < table.length; i++) {
+        for (var k = 1; k < table[i].rows.length; k++) {
+            row = table[i].rows[k];
+            for (var j = 0; j < row.cells.length; j++) {
+                cell = row.cells[j];
+                cell.onclick = null;
+            }
+        }
+    }
+}
+
+function CalculateCellAsString(cell, selectors) {
+    var cellElements = cell.querySelectorAll(selectors);
+    var cellAsString = "";
+    for (var n = 0; n < cellElements.length; n++) {
+        cellAsString += cellElements[n].innerHTML;
+    };
+    return cellAsString;
+}
+
+function setHomeworkAsDoneOrDelete(cell) {
+    console.log("Click on");
+    console.log(cell);
+    var tdAsString = CalculateCellAsString(cell, ".subject, .homework");
+    if (!cell.classList.contains("HomeworkDone")) {
+        cell.classList.add("HomeworkDone");
+        var array = getInfoFromLocalStorage("HomeworkDone") || new Array();
+        array.push(tdAsString);
+        setInfoToLocalStorage("HomeworkDone", array);
+    }
+    else {
+        cell.classList.remove("HomeworkDone");
+        var localStorageArray = getInfoFromLocalStorage("HomeworkDone");
+        for (var element = 0; element < localStorageArray.length; element++) {
+            if (localStorageArray[element] !== tdAsString) continue;
+            else {
+                localStorageArray.splice(element, 1);
+                console.log(localStorageArray);
+                setInfoToLocalStorage("HomeworkDone", localStorageArray);
+            }
+        }
+    }
+}
+
+function getInfoFromLocalStorage(key) {
+    var Info = localStorage.getItem(key);
+    var jsonAsObj = JSON.parse(Info);
+    return jsonAsObj;
+}
+
+function setInfoToLocalStorage(key, value) {
+    var InfoAsJson = JSON.stringify(value);
+    localStorage.setItem(key, InfoAsJson);
+}
+
+function showDoneHomework() {
+    console.time("showDoneHomework");
+    var table = document.getElementsByTagName("table");
+    var row;
+    var cell;
+    var storageArray = getInfoFromLocalStorage("HomeworkDone");
+    var cellAsString;
+    if (storageArray != null) {
+        for (var i = 0; i < table.length; i++) {
+            for (var k = 1; k < table[i].rows.length; k++) {
+                row = table[i].rows[k];
+                for (var j = 0; j < row.cells.length; j++) {
+                    cell = row.cells[j];
+                    cellAsString = CalculateCellAsString(cell, ".subject, .homework");
+                    for (var storageIndex = 0; storageIndex < storageArray.length; storageIndex++) {
+                        if (storageArray[storageIndex] === cellAsString) {
+                            cell.classList.add("HomeworkDone");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    console.timeEnd("showDoneHomework");
+}
 
 function options() {
     document.getElementById("options").onclick = function () {
@@ -170,6 +277,52 @@ function setCheckboxHomeworkNotifications() {
             homeworkNotifications("none", "none");
             DeleteCookie("checkboxHomeworkNotifications");
             SetCookie("checkboxHomeworkNotifications", "off", 30);
+        }
+    }
+}
+
+function homeworkDone(param) {
+    var checkbox = document.getElementById("ShowDoneHomework");
+    var elementsDoneHomework = document.getElementsByClassName("HomeworkDone");
+
+    if (param === "remove") {
+        removeClickEventListener();
+        for (var i = 0; i < elementsDoneHomework.length; i++) {
+            elementsDoneHomework[i].classList.remove("HomeworkDone");
+            i--;
+        }
+    }
+    else if (param === "add") {
+        showDoneHomework();
+        setClickEventListener();
+    }
+    if (param === "add") {
+        checkbox.checked = true;
+    }
+    else {
+        checkbox.checked = false;
+    }
+}
+
+function setCheckboxDoneHomework() {
+    var checkboxValue = getCookie("checkboxDoneHomework");
+    if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
+        homeworkDone("add");
+    }
+    else {
+        homeworkDone("remove");
+    }
+    document.getElementById("ShowDoneHomework").onchange = function () {
+        var checked = this.checked;
+        if (checked === true) {
+            homeworkDone("add");
+            DeleteCookie("checkboxDoneHomework");
+            SetCookie("checkboxDoneHomework", "on", 30);
+        }
+        else {
+            homeworkDone("remove");
+            DeleteCookie("checkboxDoneHomework");
+            SetCookie("checkboxDoneHomework", "off", 30);
         }
     }
 }
