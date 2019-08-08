@@ -1,0 +1,87 @@
+﻿@page
+@model WebSite.Pages.infoModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>info</title>
+    <link rel="stylesheet" href="~/css/Styles.css" />
+    <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
+</head>
+<body>
+    <header>
+        <h1 id="siteInfo">
+            Домашние задания 9 "Б" класса
+            <br />
+            Гимназии №343
+        </h1>
+    </header>
+    <p>
+        Как пользоваться сайтом:
+        <br />
+        1) Сайт представляет собой сервис домашних заданий.
+        <br />
+        <span class="announcement" style="text-align: inherit">ВАЖНО! 100%-ная точность данных не гарантируется!</span>
+        <br />
+        Данные обновляются следующим образом(время обновления над каждой таблицей):
+        <br />
+        Первая неделя обновляется каждые 10 минут.
+        <br />
+        Остальные недели раз в сутки.
+        <br />
+        <hr />
+        2) Для доступа требуется одноразовая авторизация в ВК,
+        <br />
+        и включённый JavaScript. Если JavaScript отключен, его можно включить так:
+        <br />
+        <a href="https://yandex.ru/support/common/browsers-settings/browsers-java-js-settings.html">Как включить JavaScript</a>
+        <br />
+        <hr />
+        3) Первый раз сайт может загружаться медленно.
+        <br />
+        Это связано либо с медленным интернетом или устройством, либо с загрузкой некоторых тяжелых скриптов с серверов Яндекса и ВК.
+        <br />
+        В следующие разы эти скрипты будут браться из кэша(если он включен) браузера, и сайт будет грузиться гораздо быстрее.
+        <br />
+        <hr />
+        4) Для корректной работы сайта рекомендуется использовать следующие браузеры(последних версий):
+        <ul>
+            <li>Google Chrome</li>
+            <li>Яндекс.Браузер</li>
+            <li>Mozilla Firefox</li>
+            <li>Opera</li>
+            <li>Microsoft Edge</li>
+        </ul>
+        <hr />
+        5) Настройки сайта:
+        <br />
+        <ul>
+            <li>События домашки:</li>
+            <li class="dzAdded" style="background-color: inherit">Домашка появилась</li>
+            <li class="dzAdded" style="background-color: inherit">Домашка появилась(предмет раньше был)</li>
+            <li class="dzChanged" style="background-color: inherit">Домашка изменена</li>
+            <li class="dzDeleted" style="background-color: inherit">Домашка удалена</li>
+            <li class="dzDeleted" style="background-color: inherit">Предмет с домашкой удален</li>
+            <li>+ дата и время этого события</li>
+            <li class="announcement" style="text-align: inherit">Погрешность даты и времени событий равна частоте обновления данных!</li>
+        </ul>
+        <img src="~/img/deletedSubjectWithHomework.png" alt="Пример удаленного предмета с дз" id="deletedSubjectWithHomeworkImg" />
+        <img src="~/img/HomeworkNotifications.png" alt="Пример событий домашки" id="HomeworkNotificationsImg" />
+        <ul>
+            <li>Готовые дз:</li>
+            <li>При включенной опции надо один раз кликнуть на ячейку,она загорится <span class="DoneHomework">этим цветом.</span></li>
+            <li>Таким образом, можно помечать сделанные дз.</li>
+            <li><span class="announcement" style="background-color: inherit">В режиме инкогнито не работает!</span></li>
+        </ul>
+        <hr />
+        6) При наличии любых вопросов обращаться сюда:
+        <br />
+        <a href="https://t.me/joinchat/IQHB1Efqq0KVXCFs4O5EDQ">Техподдержка dz4all.ru</a>
+        <br />
+        <a href="/Index">На главную</a>
+    </p>
+</body>
+</html>

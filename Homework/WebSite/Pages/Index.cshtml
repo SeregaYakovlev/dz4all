@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="~/css/Styles.css" />
     <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
     <script src="https://vk.com/js/api/openapi.js?160" type="text/javascript"></script>
+    <script src="~/js/browser&OS.js"></script>
+    <!--Не менять местами эти два скрипта. Второй зависит от первого!-->
     <script src="~/js/JavaScript.js"></script>
 </head>
 <body>
@@ -30,23 +32,38 @@
     <!--#endregion-->
     <header>
         <h1 id="siteInfo">
-            Домашние задания 8 "Б" класса
+            Домашние задания 9 "Б" класса
             <br />
             Гимназии №343
         </h1>
     </header>
     <noscript>
+        <style>
+            #infoVkAuthorization {
+                display: none;
+            }
+            footer {
+                text-align: center;
+            }
+        </style>
         <div class="announcement">
             <p>
                 <strong>Внимание!</strong>
                 <br />
-                Для работы требуются:
+                1) В браузере отключён JavaScript, его нужно включить для работы сайта.
                 <br />
-                1) JavaScript (он у вас отключён)
+                <a href="https://yandex.ru/support/common/browsers-settings/browsers-java-js-settings.html">Как включить JavaScript</a>
                 <br />
-                2) Файлы cookies(желательно)
+                2) Возможно у вас старый или левый браузер - поставьте современный, либо откройте сайт в другом браузере.
                 <br />
-                3) Никаких Internet Explorer'ов и других допотопных браузеров
+                Если современный - обновите до последней версии.
+                <br />
+                3) Попробуйте просто обновить страницу - может какой-то сбой.
+                <br />
+                4) Если ничего не помогло - обращайтесь:
+                <br />
+                <a href="https://t.me/joinchat/IQHB1Efqq0KVXCFs4O5EDQ">Техподдержка dz4all.ru</a>
+            </p>
         </div>
     </noscript>
     <script type="text/javascript">
@@ -54,18 +71,17 @@
             apiId: 6976164
         });
     </script>
-    <div id="vkAutorizer"></div>
+    <div id="vkAuthorizer"></div>
     <script type="text/javascript">
         window.onload = function () {
-            VK.Widgets.Auth('vkAutorizer', {
+            VK.Widgets.Auth('vkAuthorizer', {
                 "onAuth": function () {
                     show();
-                    alert("Вы авторизовались успешно!");
                 }
             });
         }
     </script>
-    <p id="infoVkAutorization">
+    <p id="infoVkAuthorization">
         Чтобы просмотреть домашние задания, нужно авторизоваться в контакте.
         <br />
         При нажатии кнопки вы будете переадресованы на вконтакт,
@@ -73,12 +89,12 @@
         затем обратно на сайт.
     </p>
     <div id="content">
-        <img src="~/img/optionsIcon.png" alt="Настройки" id="options"/>
+        <img src="~/img/optionsIcon.png" alt="Настройки" id="options" />
         <form id="form">
             <br />
-            <input type="checkbox" id="ShowLessonContent" />Показывать темы уроков
+            <input type="checkbox" id="ShowLessonContent" />Темы уроков
             <br />
-            <input type="checkbox" id="ShowHomeworkNotifications" />Показывать события домашки
+            <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
             <br />
             <input type="checkbox" id="ShowDoneHomework" />Готовые дз
         </form>
@@ -88,7 +104,7 @@
         @using Newtonsoft.Json;
         @{
 
-            string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
+            string pathToDataDirectory = @"\HomeworkData";/*@"C:\Users\Serega\Desktop\Publish\HomeworkData";*/
 
             if (!Directory.Exists(pathToDataDirectory))
             {
@@ -130,9 +146,9 @@
                     }
 
                     var tableUpdatedTime = System.IO.File.GetLastWriteTime(lastFile.FullName);
-                    <caption>
+                    @Html.Raw("<caption>");
                         <p>Обновлено @tableUpdatedTime.ToString("d.MM H:mm")</p>
-                    </caption>
+                    @Html.Raw("</caption>");
                     // Начинаем парсить json
                     //
 
@@ -187,6 +203,8 @@
                               //Console.Write(item);
                             if (item != null)
                             {
+                                /* При изменений символов ':', 'Дз: ' не забыть поменять их в
+                                 * функции CalculateCellAsString in JavaScript.js.*/
 
                                 var subject = item["subject_name"].ToString();
                                 var lesson_content = item["content_name"].ToString();
@@ -224,8 +242,6 @@
                                                 {
                                                     <br />
                                                     <span class="dzAdded">Домашка появилась @updateTime</span>
-                                                    /*ВАЖНО!!! Если несколько одинаковых данных в разных jsonObjects
-                                                     * то напишется несколько <span>!!!.*/
                                                 }
                                                 else if (!tasks.Any() && item2["tasks"].Any())
                                                 {
@@ -234,7 +250,7 @@
                                                     foreach (var task in item2["tasks"])
                                                     {
                                                         <br />
-                                                        <span class="dzDeleted">@task.ToString()</span>
+                                                        <span class="dzDeleted">Дз: @task.ToString()</span>
                                                     }
                                                 }
                                                 else if (homeworkStatus == "changed")
@@ -274,7 +290,7 @@
                                 {
                                     var weekDate = DateTime.ParseExact(week.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                    @Html.Raw("<td class='delSubjectCell painted'>");
+                                    @Html.Raw("<td class='delSubjectCell paintedDelSubjectCell'>");
                                     if (weekDate == delDate)
                                     {
 
@@ -327,5 +343,12 @@
             }
         }
     </div>
+    <footer>
+        <p>
+            Информация о сайте:
+            <br />
+            <a href="/info">Как пользоваться сайтом</a>
+        </p>
+    </footer>
 </body>
 </html>

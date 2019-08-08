@@ -1,0 +1,32 @@
+function SetCookie(name, value, expires) {
+    console.log("SetCookie");
+    var now = new Date();
+    var AddedDate = now.setDate(now.getDate() + expires); // Здесь now переставляется на месяц из-за now.setDate
+    var date = new Date(AddedDate);
+    document.cookie = "" + name + "=" + encodeURIComponent(value) + ";" + "path=/;" + "expires=" + date.toUTCString();
+}
+
+function DeleteCookie(name) {
+    console.log("DeleteCookie");
+    var date = new Date(0);
+    document.cookie = "" + name + "="; "path=/"; "expires=" + date.toUTCString();
+}
+
+function getCookie(name) {
+    var matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+function ifCookiesEnabled() {
+    console.log("ifCookiesEnabled");
+    var cookiesEnabled = navigator.cookieEnabled;
+    console.log(cookiesEnabled);
+    if (!cookiesEnabled) {
+        var para = document.createElement("p");
+        para.innerHTML = `Файлы cookies выключены. Некоторые функции могут не работать.`;
+        document.getElementsByTagName("header")[0].appendChild(para);
+        para.className = "announcement";
+    }
+}

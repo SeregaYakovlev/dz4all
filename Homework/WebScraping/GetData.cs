@@ -1,18 +1,13 @@
-﻿using HtmlAgilityPack;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PuppeteerSharp;
 using Serilog;
 using System;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Net.Http;
 using System.Net;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace WebScraping
 {
@@ -21,7 +16,7 @@ namespace WebScraping
         //static JsonSerializerSettings jsonSettings;
         static async System.Threading.Tasks.Task Main(string[] args)
         {
-            string pathToDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkData";
+            string pathToDataDirectory = @"\HomeworkData"; /*@"C:\Users\Serega\Desktop\Publish\HomeworkData";*/
             EnsureDirectoryExists(pathToDataDirectory);
 
             #region Конфигурационная и отладочная хрень
@@ -40,7 +35,7 @@ namespace WebScraping
             //jsonSettings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, ContractResolver = jsonResolver };
             #endregion
 
-            // Установка и обновление браузера chronium
+            // Установка и обновление браузера chromium
             var browserFetcher = new BrowserFetcher();
             var localVersions = browserFetcher.LocalRevisions();
 
@@ -70,10 +65,7 @@ namespace WebScraping
                 */
 
                 var p = await browser.NewPageAsync();
-                /* Дальше повторяем заход на сайт, так как
-                 * периодически могут повторяться проблемы
-                 * с SSL, в результате чего сайт может
-                 * не загрузиться. */
+                /* 10 попыток подключения нужны, если сервер плохой, или интенета вдруг нету.*/
 
                 bool success = false;
                 int connectCount = 0;
@@ -81,14 +73,14 @@ namespace WebScraping
                 {
                     try
                     {
-                        await p.GoToAsync("https://petersburgedu.ru");
+                        await p.GoToAsync("https://dnevnik2.petersburgedu.ru");
                         success = true;
-                        Log.Information("Подключение к сайту {Site}: успешно!", "https://petersburgedu.ru");
+                        Log.Information("Подключение к сайту {Site}: успешно!", "https://dnevnik2.petersburgedu.ru");
                     }
                     catch (PuppeteerException e)
                     {
-                        Log.Error(e, "GoToAsync({Site} failed", "https://petersburgedu.ru");
-                        Log.Information("Подключение к сайту {Site}: Ошибка, повторяю...", "https://petersburgedu.ru");
+                        Log.Error(e, "GoToAsync({Site} failed", "https://dnevnik2.petersburgedu.ru");
+                        Log.Information("Подключение к сайту {Site}: Ошибка, повторяю...", "https://dnevnik2.petersburgedu.ru");
                         Log.Information("Попытка № {attempt}", connectCount + 1);
                         await System.Threading.Tasks.Task.Delay(3000);
                         connectCount++;
@@ -96,43 +88,33 @@ namespace WebScraping
                 }
 
                 // Кликаем по кнопкам и переходим на страницы
-                p = await GetPage(browser, "https://petersburgedu.ru");
 
-                const string button = "body > div.container-fluid.framework.main-page > section > div.header-img.row-fluid.nopadding > div > div > div > div > div.diary-auth > a:nth-child(3)";
+                const string button = "body > app-root > n3-grid > app-login > div > div.notice > div > app-login-form > div > button";
                 await p.WaitForSelectorAsync(button);
                 await p.ClickAsync(button);
 
-                Log.Information("Первый клик {Button}: успешно!", "Новая версия сайта");
-
-                p = await GetPage(browser, "https://dnevnik2.petersburgedu.ru");
-
-                const string button2 = "body > app-root > n3-grid > app-login > div > div.notice > div > app-login-form > div > button";
-                await p.WaitForSelectorAsync(button2);
-                await p.ClickAsync(button2);
-
-                Log.Information("Второй клик {Button}: успешно!", "Войти с ЕСИА");
+                Log.Information("Первый клик {Button}: успешно!", "Войти с ЕСИА");
 
                 p = await GetPage(browser, "https://esia.gosuslugi.ru");
 
                 // Авторизация
                 await p.WaitForSelectorAsync("#mobileOrEmail");
                 await p.FocusAsync("#mobileOrEmail");
-                await p.Keyboard.TypeAsync("+79219305001");
+                await p.Keyboard.TypeAsync(args[0]/*"+79219305001"*/);
 
                 await p.WaitForSelectorAsync("#password");
                 await p.FocusAsync("#password");
-                await p.Keyboard.TypeAsync("hereHERE1978!(&");
+                await p.Keyboard.TypeAsync(args[1]/*"hereHERE1978!(&"*/);
 
                 await p.WaitForSelectorAsync("#loginByPwdButton > span");
                 await p.ClickAsync("#loginByPwdButton > span");
 
                 Log.Information("Авторизация: успешно!");
 
-                p = await GetPage(browser, "https://dnevnik2.petersburgedu.ru");
-
                 /* Куки нужны для того, чтобы сайт меня опознал
                  * при отправке http-запроса на сервер эл. дневника */
 
+                // 10 попыток получения cookie.
                 Cookie cookie;
                 int forCount = 0;
                 do
@@ -167,7 +149,7 @@ namespace WebScraping
                 }
                 last = currentLast.Date;
 
-                string k = "12"; // На сколько недель нужна домашка?
+                string k = args[2]; // На сколько недель нужна домашка?
                 int count = Convert.ToInt32(k);
 
                 for (int i = 0; i < count; i++)
@@ -196,8 +178,7 @@ namespace WebScraping
                     }
                     string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                     EnsureDirectoryExists(currentWeekPath);
-                    string fileName = "0.json";
-                    var path = Path.Combine(currentWeekPath, fileName);
+                    
 
                     var lastFile = new DirectoryInfo(currentWeekPath)
                                         .GetFiles()
@@ -295,6 +276,9 @@ namespace WebScraping
                     {
                         File.Delete(file.FullName);
                     }
+                    string fileName = "0.json";
+                    var path = Path.Combine(currentWeekPath, fileName);
+
                     await File.WriteAllTextAsync(path, jsonContentAsAString);
                     Log.Information($"Файл создан: {fileName}");
                 }
