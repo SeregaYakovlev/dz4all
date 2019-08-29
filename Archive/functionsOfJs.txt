@@ -30,3 +30,38 @@ function ifCookiesEnabled() {
         para.className = "announcement";
     }
 }
+
+function hideTables() {
+        /* Эта функция нужна для следущего:
+         * Если у меня есть пустые json-файлы, то на странице образуется пустые места.
+         * Эта функция их убирает. Заодно, при выключенной опции HomeworkNotifications
+         * убираются пустые строки, предназначенные для удаленных предметов с домашкой,
+         * которые на странице все равно есть при наличии этих предметов */
+
+        var tables = document.getElementsByTagName("table");
+        for (var b = 0; b < tables.length; b++) {
+            var isTableEmpty = true;
+            for (var m = 0; m < tables[b].rows.length; m++) {
+                var isRowEmpty = checkIfCellsAreEmpty(tables[b].rows[m]);
+                if (!isRowEmpty) isTableEmpty = false;
+                else {
+                    // здесь заодно убираются те самые пустые строки.
+                    tables[b].rows[m].style.display = "none";
+                }
+            }
+            if (isTableEmpty) {
+                tables[b].style.display = "none";
+            }
+        }
+}
+
+function checkIfCellsAreEmpty(row) {
+        var cells = row.cells;
+        var isCellEmpty = false;
+        for (var j = 0; j < cells.length; j++) {
+            if (cells[j].innerHTML !== '') {
+                return isCellEmpty;
+            }
+        }
+        return !isCellEmpty;
+}

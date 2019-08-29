@@ -16,7 +16,7 @@ namespace WebSite
         {
             CreateWebHostBuilder(args)
                 .UseUrls("http://*:5000")
-                .UseWebRoot(@".\WebSite\wwwroot\")
+                //.UseWebRoot(@".\WebSite\wwwroot\")
                 .Build()
                 .Run();
         }

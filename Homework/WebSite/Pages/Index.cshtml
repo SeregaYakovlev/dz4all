@@ -15,21 +15,6 @@
     <script src="~/js/JavaScript.js"></script>
 </head>
 <body>
-    <!--#region Yandex.Metrika counter-->
-    <script type="text/javascript">
-        (function (m, e, t, r, i, k, a) {
-            m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
-            m[i].l = 1 * new Date(); k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-        })
-            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-        ym(53635789, "init", {
-            clickmap: true,
-            trackLinks: true,
-            accurateTrackBounce: true
-        });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/53635789" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!--#endregion-->
     <header>
         <h1 id="siteInfo">
             Домашние задания 9 "Б" класса
@@ -42,6 +27,7 @@
             #infoVkAuthorization {
                 display: none;
             }
+
             footer {
                 text-align: center;
             }
@@ -96,7 +82,7 @@
             <br />
             <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
             <br />
-            <input type="checkbox" id="ShowDoneHomework" />Готовые дз
+            <!--<input type="checkbox" id="ShowDoneHomework" />Готовые дз-->
         </form>
         @using System.IO;
         @using Newtonsoft.Json.Linq;
@@ -104,7 +90,7 @@
         @using Newtonsoft.Json;
         @{
 
-            string pathToDataDirectory = @"\HomeworkData";/*@"C:\Users\Serega\Desktop\Publish\HomeworkData";*/
+            string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\HomeworkData";
 
             if (!Directory.Exists(pathToDataDirectory))
             {
@@ -119,7 +105,19 @@
                 var lastFile = new DirectoryInfo(currentWeekDir)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
-                                    .Where(file => file.Name != "diffs.json")
+                                    .Where(file =>
+                                    {
+                                        if (file.Name == "diffs.json") return false;
+                                        string readedFile;
+                                        using (var reader = new StreamReader(file.FullName))
+                                        {
+                                            readedFile = reader.ReadToEnd();
+                                        }
+                                        var json = JObject.Parse(readedFile);
+                                        var items = json["data"]["items"];
+                                        if (items.Any()) return true;
+                                        else return false;
+                                    })
                                     .FirstOrDefault();
 
                 if (lastFile != null)
@@ -147,7 +145,7 @@
 
                     var tableUpdatedTime = System.IO.File.GetLastWriteTime(lastFile.FullName);
                     @Html.Raw("<caption>");
-                        <p>Обновлено @tableUpdatedTime.ToString("d.MM H:mm")</p>
+                    <p>Обновлено @tableUpdatedTime.ToString("d.MM H:mm")</p>
                     @Html.Raw("</caption>");
                     // Начинаем парсить json
                     //
