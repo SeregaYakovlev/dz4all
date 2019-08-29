@@ -3,6 +3,9 @@
 @{
     Layout = null;
 }
+@{
+    string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\HomeworkData";
+}
 <!DOCTYPE html>
 <html>
 <head>
@@ -89,17 +92,15 @@
         @using System.Linq;
         @using Newtonsoft.Json;
         @{
-
-            string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\HomeworkData";
-
             if (!Directory.Exists(pathToDataDirectory))
             {
                 Directory.CreateDirectory(pathToDataDirectory);
             }
 
             var currentWeekDirectories = Directory.GetDirectories(pathToDataDirectory);
+
+            bool isFiles = false;
             int tableCount = 0;
-            bool isData = false;
             foreach (var currentWeekDir in currentWeekDirectories)
             {
                 var lastFile = new DirectoryInfo(currentWeekDir)
@@ -108,6 +109,7 @@
                                     .Where(file =>
                                     {
                                         if (file.Name == "diffs.json") return false;
+                                        if (!isFiles) isFiles = true;
                                         string readedFile;
                                         using (var reader = new StreamReader(file.FullName))
                                         {
@@ -136,7 +138,7 @@
 
                     //int tdCount = 0;
                     @Html.Raw("<table>");
-
+                    tableCount++;
                     string readedFile;
                     using (var reader = new StreamReader(lastFile.FullName))
                     {
@@ -167,10 +169,7 @@
                     // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
 
                     @Html.Raw("<tr>");
-                    if (itemsGroupedByWeeksDay.Any())
-                    {
-                        isData = true;
-                    }
+
                     foreach (var weekDayItems in itemsGroupedByWeeksDay)
                     {
                         var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
@@ -313,12 +312,11 @@
                             }
                         }
                     }
-                    tableCount++;
                     @Html.Raw("</table>");
                 }
             }
 
-            if (tableCount == 0)
+            if (!isFiles && tableCount == 0)
             {
                 <p class="announcement">
                     <strong>ВНИМАНИЕ!</strong>
@@ -328,7 +326,7 @@
                     <span>Не удалось получить данные с электронного дневника.</span>
                 </p>
             }
-            else if (isData == false)
+            else if (isFiles && tableCount == 0)
             {
                 var updateTimeList = new List<DateTime>();
                 foreach (var curWeekdirectory in currentWeekDirectories)

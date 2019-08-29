@@ -1,5 +1,6 @@
 ﻿/* window.onerror должен быть первым. Иначе, если будет ошибка до window.onerror,
 то он не инициализируется, и на сервер ничего отправлено не будет. */
+/* Не все комментарии можно удалять. Некоторые содержат выключенный функционал */
 
 window.onerror = function (message, url, lineNumber) {
     var browser = BrowserDetect.browser + " " + BrowserDetect.version;
@@ -14,9 +15,9 @@ document.addEventListener("DOMContentLoaded", function () {
     setIconOfOptionsAsClickable();
     setStatusOfCheckboxOfLessonContent();
     setStatusOfCheckboxOfHomeworkNotifications();
-    setStatusOfCheckboxOfDoneHomework();
+    //setStatusOfCheckboxOfDoneHomework();
     doctypeForDevelopers();
-    hideEmptyElements();
+    deleteEmptyPaintedElements();
     setListenersOfEvents();
 })
 
@@ -45,7 +46,7 @@ function setListenersOfEvents() {
         }
     }
 
-    document.getElementById("ShowDoneHomework").onchange = function () {
+    /*document.getElementById("ShowDoneHomework").onchange = function () {
         var checked = this.checked;
         if (checked === true) {
             ChangeDisplayStatusOfDoneHomework("add");
@@ -55,7 +56,7 @@ function setListenersOfEvents() {
             ChangeDisplayStatusOfDoneHomework("remove");
             setInfoToLocalStorage("DisplayStatusOfDoneHomework", "off");
         }
-    }
+    }*/
 }
 
 function setStatusOfCheckboxOfLessonContent() {
@@ -275,59 +276,20 @@ function doctypeForDevelopers() {
     }
 }
 
-function hideEmptyElements() {
-    hideTables();
-    deleteEmptyPaintedElements();
+function deleteEmptyPaintedElements() {
+    /* Для чего эта функция нужна:
+     * Дело в том, что все ячейки строки удаленных предметов(delObjects in Index.cshtml) с домашкой желтые.
+     * Но ячейки могут быть пустыми. => Эта функция убирает пустые желтые ячейки,
+     * чтобы желтым цветом подсвечивались только удаленные предметы с домашкой.*/
 
-    function deleteEmptyPaintedElements() {
-        /* Для чего эта функция нужна:
-         * Дело в том, что все ячейки строки удаленных предметов(delObjects in Index.cshtml) с домашкой желтые.
-         * Но ячейки могут быть пустыми. => Эта функция убирает пустые желтые ячейки,
-         * чтобы желтым цветом подсвечивались только удаленные предметы с домашкой.*/
-
-        var delElements = document.getElementsByClassName("paintedDelSubjectCell");
-        var delElement;
-        for (var x = 0; x < delElements.length; x++) {
-            delElement = delElements[x];
-            if (delElement.textContent === "") {
-                delElement.classList.remove("paintedDelSubjectCell");
-                x--; // уменьшается длина delElements, уменьшается и индекс.
-            }
+    var delElements = document.getElementsByClassName("paintedDelSubjectCell");
+    var delElement;
+    for (var x = 0; x < delElements.length; x++) {
+        delElement = delElements[x];
+        if (delElement.textContent === "") {
+            delElement.classList.remove("paintedDelSubjectCell");
+            x--; // уменьшается длина delElements, уменьшается и индекс.
         }
-    }
-
-    function hideTables() {
-        /* Эта функция нужна для следущего:
-         * Если у меня есть пустые json-файлы, то на странице образуется пустые места.
-         * Эта функция их убирает. Заодно, при выключенной опции HomeworkNotifications
-         * убираются пустые строки, предназначенные для удаленных предметов с домашкой,
-         * которые на странице все равно есть при наличии этих предметов */
-
-        var tables = document.getElementsByTagName("table");
-        for (var b = 0; b < tables.length; b++) {
-            var isTableEmpty = true;
-            for (var m = 0; m < tables[b].rows.length; m++) {
-                var isRowEmpty = checkIfCellsAreEmpty(tables[b].rows[m]);
-                if (!isRowEmpty) isTableEmpty = false;
-                else {
-                    // здесь заодно убираются те самые пустые строки.
-                    tables[b].rows[m].style.display = "none";
-                }
-            }
-            if (isTableEmpty) {
-                tables[b].style.display = "none";
-            }
-        }
-    }
-    function checkIfCellsAreEmpty(row) {
-        var cells = row.cells;
-        var isCellEmpty = false;
-        for (var j = 0; j < cells.length; j++) {
-            if (cells[j].innerHTML !== '') {
-                return isCellEmpty;
-            }
-        }
-        return !isCellEmpty;
     }
 }
 
@@ -348,6 +310,7 @@ function show() {
     document.getElementById("content").style.display = "inline";
     document.getElementById("vkAuthorizer").style.display = "none";
     document.getElementById("infoVkAuthorization").style.display = "none";
+    document.getElementById("siteInfo").style.display = "none";
 }
 
 function getInfoFromLocalStorage(key) {

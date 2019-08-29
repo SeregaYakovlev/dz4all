@@ -1,5 +1,6 @@
 ﻿body {
     background-color: rgb(240, 240, 245);
+    font-family: Roboto,sans-serif;
 }
 
 table {
@@ -44,7 +45,6 @@ caption {
 #deletedSubjectWithHomeworkImg, #HomeworkNotificationsImg {
     /*page: info*/
     width: 15%;
-    margin-bottom: -25px;
 }
 
 .fileModifiedTime {
