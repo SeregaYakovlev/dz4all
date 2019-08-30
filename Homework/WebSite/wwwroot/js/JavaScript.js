@@ -207,14 +207,14 @@ function setOrRemoveClickEventListenerOfDoneHomework(param) {
     var table = document.getElementsByTagName("table");
     var row;
     var cell;
-    var isHomework;
+    //var isHomework;
     for (var i = 0; i < table.length; i++) {
         for (var k = 1; k < table[i].rows.length; k++) {
             row = table[i].rows[k];
             for (var j = 0; j < row.cells.length; j++) {
                 cell = row.cells[j];
-                isHomework = cell.querySelector(".homework");
-                if (!cell.classList.contains("delSubjectCell") && isHomework != null) {
+                //isHomework = cell.querySelector(".homework");
+                if (!cell.classList.contains("delSubjectCell") /*&& isHomework != null*/) {
                     if (param === "set") {
                         cell.onclick = function () {
                             setHomeworkAsDoneOrDeleteIfClick(this);
@@ -271,6 +271,20 @@ function doctypeForDevelopers() {
         if (window.location.origin === doctypeLinks[i]) {
             show();
             console.log("You are using doctype for developers");
+
+            document.getElementById("InputDoneHomework").style.display = "inline";
+            document.getElementById("ShowDoneHomework").onchange = function () {
+                var checked = this.checked;
+                if (checked === true) {
+                    ChangeDisplayStatusOfDoneHomework("add");
+                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "on");
+                }
+                else {
+                    ChangeDisplayStatusOfDoneHomework("remove");
+                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "off");
+                }
+            }
+            setStatusOfCheckboxOfDoneHomework();
             return;
         }
     }
@@ -334,7 +348,7 @@ function SendToServerAboutError(error) {
 function SendToServerAboutUser(name, surname) {
     var xhr = new XMLHttpRequest();
     var host = window.location.origin;
-    var requestBody = name + " " + surname + " " + host;
+    var requestBody = name + " " + surname;
     xhr.open("POST", host, true);
     xhr.send(requestBody);
 }

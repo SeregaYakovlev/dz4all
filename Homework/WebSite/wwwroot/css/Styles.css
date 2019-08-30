@@ -38,6 +38,10 @@ caption {
     display: none;
 }
 
+#InputDoneHomework {
+    display: none;
+}
+
 #options {
     width: 3%;
 }

@@ -12,31 +12,16 @@ using Newtonsoft.Json.Linq;
 
 namespace WebScraping
 {
-    class GetData
+    class GetContentAndDiffs
     {
-        //static JsonSerializerSettings jsonSettings;
         static async System.Threading.Tasks.Task Main(string[] args)
         {
-            string pathToDataDirectory = /*@"\.HomeworkData";*/ @"C:\Users\Serega\Desktop\Publish\HomeworkData";
-            string pathToAuthorizationDataDirectory = @"C:\Users\Serega\Desktop\Publish\HomeworkAuthorizationData";
-            var pathToCookieFile = Path.Combine(pathToAuthorizationDataDirectory, "cookie.json");
+            string pathToDataDirectory = /*@"\.HomeworkData";*/ @"C:\Users\Serega\Desktop\Publish\Content";
+            string pathToAuthorizationDataDirectory = @"C:\Users\Serega\Desktop\Publish\AuthorizationData";
+            string pathToCookieFile = Path.Combine(pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
             EnsureDirectoryExists(pathToDataDirectory);
             EnsureDirectoryExists(pathToAuthorizationDataDirectory);
-            #region Конфигурационная и отладочная хрень
-            var logConfig = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.Seq("http://localhost:5341");
-            Log.Logger = logConfig.CreateLogger();
-
-            //var jsonResolver = new IgnorableSerializerContractResolver();
-            //ignore single property
-            //jsonResolver.Ignore(typeof(Company), "ExitCode");
-            //jsonResolver.Ignore(typeof(Company), "ExitTime");
-            // ignore single datatype
-            //jsonResolver.Ignore(typeof(System.Diagnostics.Process));
-            //jsonSettings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, ContractResolver = jsonResolver };
-            #endregion
+            ConfigureLogger();
             await InstallBrowserAsync();
 
             string cookieFile;
@@ -55,9 +40,8 @@ namespace WebScraping
             else
             {
                 Log.Information("Файл cookie отсутствует. Авторизация");
-                cookie = await Authorization.AuthorizeAsync(args, pathToCookieFile, Log.Logger);
+                cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
             }
-
 
             // Соединяемся с электронным дневником и получаем JSON
 
@@ -115,7 +99,7 @@ namespace WebScraping
                     {
                         connectionCount++;
                         Log.Information("Файл cookie устарел. Авторизация.");
-                        cookie = await Authorization.AuthorizeAsync(args, pathToCookieFile, Log.Logger);
+                        cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
                         cookieContainer = new CookieContainer();
                         cookieContainer.Add(baseAddress, cookie);
                         handler = new HttpClientHandler() { CookieContainer = cookieContainer };
@@ -145,73 +129,80 @@ namespace WebScraping
                     var result = oldTree.GetDiffs(newTree);
                     // Item1(old) - файлы, Item2(@new) - электронный дневник
 
-                    string currentDiffsFile = Path.Combine(currentWeekPath, "diffs.json");
+                    string currentDiffsFileToWrite = Path.Combine(currentWeekPath, "diffs.json");
                     if (result.Any())
                     {
-                        var currentDiffsDirectoryFile = Directory.GetFiles(currentWeekPath, "diffs.json");
-                        if (!currentDiffsDirectoryFile.Any())
+                        var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, "diffs.json");
+                        if (!currentDiffsFileForReading.Any())
                         {
                             var convertToJson = JsonConvert.SerializeObject(result);
-                            await File.WriteAllTextAsync(currentDiffsFile, convertToJson);
+                            await File.WriteAllTextAsync(currentDiffsFileToWrite, convertToJson);
                         }
                         else
                         {
                             string readedDiffsFile;
 
-                            using (var reader = new StreamReader(currentDiffsDirectoryFile.Single()))
+                            using (var reader = new StreamReader(currentDiffsFileForReading.Single()))
                             {
                                 readedDiffsFile = await reader.ReadToEndAsync();
                             }
-
-                            var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-
-                            var concatedObj = parsedFile.Concat(result);
-
-                            var dateTimeList = new List<DateTime>();
-                            foreach (var items in concatedObj)
+                            if (!readedDiffsFile.Any())
                             {
-                                string dateTime1;
-                                string dateTime2;
-                                DateTime dateTime1AsDateTime;
-                                DateTime dateTime2AsDateTime;
-                                if (items.Item1 != null)
-                                {
-                                    dateTime1 = items.Item1.datetime_from;
-                                    dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
-                                    dateTimeList.Add(dateTime1AsDateTime);
-                                }
-                                if (items.Item2 != null)
-                                {
-                                    dateTime2 = items.Item2.datetime_from;
-                                    dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
-                                    dateTimeList.Add(dateTime2AsDateTime);
-                                }
+                                var convertToJson = JsonConvert.SerializeObject(result);
+                                await File.WriteAllTextAsync(currentDiffsFileToWrite, convertToJson);
                             }
-                            var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+                            else
+                            {
+                                var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
 
-                            var item1 = concatedObj.Where(time =>
-                            {
-                                if (time.Item1 != null)
-                                {
-                                    var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                    return timeAsDateTime >= maxDateTimeSaved;
-                                }
-                                else return false;
-                            });
-                            var item2 = concatedObj.Where(time =>
-                            {
-                                if (time.Item2 != null)
-                                {
-                                    var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                    return timeAsDateTime >= maxDateTimeSaved;
-                                }
-                                else return false;
-                            });
-                            var newData = JsonConvert.SerializeObject(item1.Concat(item2));
+                                var concatedObj = parsedFile.Concat(result);
 
-                            if (newData.Any())
-                            {
-                                await File.WriteAllTextAsync(currentDiffsFile, newData);
+                                var dateTimeList = new List<DateTime>();
+                                foreach (var items in concatedObj)
+                                {
+                                    string dateTime1;
+                                    string dateTime2;
+                                    DateTime dateTime1AsDateTime;
+                                    DateTime dateTime2AsDateTime;
+                                    if (items.Item1 != null)
+                                    {
+                                        dateTime1 = items.Item1.datetime_from;
+                                        dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
+                                        dateTimeList.Add(dateTime1AsDateTime);
+                                    }
+                                    if (items.Item2 != null)
+                                    {
+                                        dateTime2 = items.Item2.datetime_from;
+                                        dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
+                                        dateTimeList.Add(dateTime2AsDateTime);
+                                    }
+                                }
+                                var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+
+                                var item1 = concatedObj.Where(time =>
+                                {
+                                    if (time.Item1 != null)
+                                    {
+                                        var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                        return timeAsDateTime >= maxDateTimeSaved;
+                                    }
+                                    else return false;
+                                });
+                                var item2 = concatedObj.Where(time =>
+                                {
+                                    if (time.Item2 != null)
+                                    {
+                                        var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                        return timeAsDateTime >= maxDateTimeSaved;
+                                    }
+                                    else return false;
+                                });
+                                var newData = JsonConvert.SerializeObject(item1.Concat(item2));
+
+                                if (newData.Any())
+                                {
+                                    await File.WriteAllTextAsync(currentDiffsFileToWrite, newData);
+                                }
                             }
                         }
                     }
@@ -232,14 +223,21 @@ namespace WebScraping
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
-
-
         private static void EnsureDirectoryExists(string directory)
         {
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
+        }
+
+        private static void ConfigureLogger()
+        {
+            var logConfig = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.Seq("http://localhost:5341");
+            Log.Logger = logConfig.CreateLogger();
         }
         private static async System.Threading.Tasks.Task InstallBrowserAsync()
         {
@@ -255,33 +253,5 @@ namespace WebScraping
                 Console.WriteLine(); // Перевод курсора на следующую строку(чтобы небыло "100%Успешно")
             }
         }
-        #region Методы для отладочной хрени
-        /*
-        private static void Browser_TargetDestroyed(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-
-        private static void Browser_TargetCreated(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-
-        private static void Browser_TargetChanged(object sender, TargetChangedArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-
-        private static void Browser_Disconnected(object sender, EventArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-
-        private static void Browser_Closed(object sender, EventArgs e)
-        {
-            Log.Debug("{Event} {Args}", MethodBase.GetCurrentMethod().Name, JsonConvert.SerializeObject(e, Formatting.Indented, jsonSettings));
-        }
-        */
-        #endregion
     }
 }

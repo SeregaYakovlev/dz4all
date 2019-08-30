@@ -25,7 +25,7 @@ namespace WebSite.Pages.ServicePages
         }
         private static void ErrorWriter(string bodyStr)
         {
-            string pathToReports = @"C:\Users\Serega\Desktop\Publish\HomeworkReports";
+            string pathToReports = @"C:\Users\Serega\Desktop\Publish\Reports";
             if (!Directory.Exists(pathToReports))
             {
                 Directory.CreateDirectory(pathToReports);

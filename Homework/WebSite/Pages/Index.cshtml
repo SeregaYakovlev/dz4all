@@ -4,7 +4,7 @@
     Layout = null;
 }
 @{
-    string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\HomeworkData";
+    string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\Content";
 }
 <!DOCTYPE html>
 <html>
@@ -86,6 +86,9 @@
             <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
             <br />
             <!--<input type="checkbox" id="ShowDoneHomework" />Готовые дз-->
+            <span id="InputDoneHomework">
+                <input type="checkbox" id="ShowDoneHomework" />Готовые дз
+            </span>
         </form>
         @using System.IO;
         @using Newtonsoft.Json.Linq;
@@ -283,9 +286,9 @@
                             if (item1.Any() && item1["SubjectStatus"].ToString() == "deleted" && item1["tasks"].Any())
                             {
                                 @Html.Raw("<tr>");
-                                foreach (var week in itemsGroupedByWeeksDay)
+                                foreach (var weekDay in itemsGroupedByWeeksDay)
                                 {
-                                    var weekDate = DateTime.ParseExact(week.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                                    var weekDate = DateTime.ParseExact(weekDay.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     @Html.Raw("<td class='delSubjectCell paintedDelSubjectCell'>");
                                     if (weekDate == delDate)
