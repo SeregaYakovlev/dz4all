@@ -35,8 +35,20 @@ namespace WebSite.Pages.ServicePages
             string fileName = $"Errors.txt";
             var path = Path.Combine(pathToReports, fileName);
             var file = new FileInfo(path);
-            System.IO.File.AppendAllText(file.FullName, currentTime + Environment.NewLine
-                + bodyStr + Environment.NewLine + Environment.NewLine);
+            bool success = false;
+            while (!success)
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(file.FullName, currentTime + Environment.NewLine
+                        + bodyStr + Environment.NewLine + Environment.NewLine);
+                    success = true;
+                }
+                catch (IOException)
+                {
+                    Task.Delay(1000);
+                }
+            }
         }
     }
 }

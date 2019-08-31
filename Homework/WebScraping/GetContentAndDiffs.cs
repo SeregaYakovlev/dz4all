@@ -146,63 +146,55 @@ namespace WebScraping
                             {
                                 readedDiffsFile = await reader.ReadToEndAsync();
                             }
-                            if (!readedDiffsFile.Any())
+                            var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
+
+                            var concatedObj = parsedFile.Concat(result);
+
+                            var dateTimeList = new List<DateTime>();
+                            foreach (var items in concatedObj)
                             {
-                                var convertToJson = JsonConvert.SerializeObject(result);
-                                await File.WriteAllTextAsync(currentDiffsFileToWrite, convertToJson);
+                                string dateTime1;
+                                string dateTime2;
+                                DateTime dateTime1AsDateTime;
+                                DateTime dateTime2AsDateTime;
+                                if (items.Item1 != null)
+                                {
+                                    dateTime1 = items.Item1.datetime_from;
+                                    dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
+                                    dateTimeList.Add(dateTime1AsDateTime);
+                                }
+                                if (items.Item2 != null)
+                                {
+                                    dateTime2 = items.Item2.datetime_from;
+                                    dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
+                                    dateTimeList.Add(dateTime2AsDateTime);
+                                }
                             }
-                            else
+                            var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+
+                            var item1 = concatedObj.Where(time =>
                             {
-                                var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-
-                                var concatedObj = parsedFile.Concat(result);
-
-                                var dateTimeList = new List<DateTime>();
-                                foreach (var items in concatedObj)
+                                if (time.Item1 != null)
                                 {
-                                    string dateTime1;
-                                    string dateTime2;
-                                    DateTime dateTime1AsDateTime;
-                                    DateTime dateTime2AsDateTime;
-                                    if (items.Item1 != null)
-                                    {
-                                        dateTime1 = items.Item1.datetime_from;
-                                        dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
-                                        dateTimeList.Add(dateTime1AsDateTime);
-                                    }
-                                    if (items.Item2 != null)
-                                    {
-                                        dateTime2 = items.Item2.datetime_from;
-                                        dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
-                                        dateTimeList.Add(dateTime2AsDateTime);
-                                    }
+                                    var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                    return timeAsDateTime >= maxDateTimeSaved;
                                 }
-                                var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
-
-                                var item1 = concatedObj.Where(time =>
+                                else return false;
+                            });
+                            var item2 = concatedObj.Where(time =>
+                            {
+                                if (time.Item2 != null)
                                 {
-                                    if (time.Item1 != null)
-                                    {
-                                        var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                        return timeAsDateTime >= maxDateTimeSaved;
-                                    }
-                                    else return false;
-                                });
-                                var item2 = concatedObj.Where(time =>
-                                {
-                                    if (time.Item2 != null)
-                                    {
-                                        var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                        return timeAsDateTime >= maxDateTimeSaved;
-                                    }
-                                    else return false;
-                                });
-                                var newData = JsonConvert.SerializeObject(item1.Concat(item2));
-
-                                if (newData.Any())
-                                {
-                                    await File.WriteAllTextAsync(currentDiffsFileToWrite, newData);
+                                    var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                                    return timeAsDateTime >= maxDateTimeSaved;
                                 }
+                                else return false;
+                            });
+                            var newData = JsonConvert.SerializeObject(item1.Concat(item2));
+
+                            if (newData.Any())
+                            {
+                                await File.WriteAllTextAsync(currentDiffsFileToWrite, newData);
                             }
                         }
                     }
