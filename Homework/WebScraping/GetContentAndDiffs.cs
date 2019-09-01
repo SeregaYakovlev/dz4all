@@ -14,7 +14,7 @@ namespace WebScraping
 {
     class GetContentAndDiffs
     {
-        static async System.Threading.Tasks.Task Main(string[] args)
+        private static async System.Threading.Tasks.Task Main(string[] args)
         {
             string pathToDataDirectory = /*@"\.HomeworkData";*/ @"C:\Users\Serega\Desktop\Publish\Content";
             string pathToAuthorizationDataDirectory = @"C:\Users\Serega\Desktop\Publish\AuthorizationData";

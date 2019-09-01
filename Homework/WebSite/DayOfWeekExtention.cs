@@ -7,7 +7,7 @@ namespace WebSite
 {
     public static class DayOfWeekExtention
     {
-        static string[] russianDaysWeek = new string[]
+        private static string[] russianDaysWeek = new string[]
             {
                 "Воскресенье",
                 "Понедельник",
