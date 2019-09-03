@@ -1,12 +1,8 @@
 ﻿using System;
 using System.IO;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Newtonsoft.Json.Linq;
+using static ClassLibrary.Pathes;
 
 namespace WebSite.Pages
 {
@@ -27,7 +23,6 @@ namespace WebSite.Pages
         }
         private static void UserWriter(string bodyStr)
         {
-            string pathToReports = @"C:\Users\Serega\Desktop\Publish\Reports";
             if(!Directory.Exists(pathToReports))
             {
                 Directory.CreateDirectory(pathToReports);

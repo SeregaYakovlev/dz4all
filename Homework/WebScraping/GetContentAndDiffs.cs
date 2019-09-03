@@ -3,12 +3,12 @@ using PuppeteerSharp;
 using Serilog;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
 using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using static ClassLibrary.Pathes;
 
 namespace WebScraping
 {
@@ -16,8 +16,6 @@ namespace WebScraping
     {
         private static async System.Threading.Tasks.Task Main(string[] args)
         {
-            string pathToDataDirectory = /*@"\.HomeworkData";*/ @"C:\Users\Serega\Desktop\Publish\Content";
-            string pathToAuthorizationDataDirectory = @"C:\Users\Serega\Desktop\Publish\AuthorizationData";
             string pathToCookieFile = Path.Combine(pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
             EnsureDirectoryExists(pathToDataDirectory);
             EnsureDirectoryExists(pathToAuthorizationDataDirectory);

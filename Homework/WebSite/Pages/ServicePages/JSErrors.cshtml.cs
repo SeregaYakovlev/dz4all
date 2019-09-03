@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using static ClassLibrary.Pathes;
 
 namespace WebSite.Pages.ServicePages
 {
@@ -25,7 +23,6 @@ namespace WebSite.Pages.ServicePages
         }
         private static void ErrorWriter(string bodyStr)
         {
-            string pathToReports = @"C:\Users\Serega\Desktop\Publish\Reports";
             if (!Directory.Exists(pathToReports))
             {
                 Directory.CreateDirectory(pathToReports);

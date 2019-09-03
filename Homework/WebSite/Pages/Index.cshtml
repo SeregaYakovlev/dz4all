@@ -3,9 +3,7 @@
 @{
     Layout = null;
 }
-@{
-    string pathToDataDirectory = /*@"\.HomeworkData";*/@"C:\Users\Serega\Desktop\Publish\Content";
-}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -93,7 +91,7 @@
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @using System.Linq;
-        @using Newtonsoft.Json;
+        @using static ClassLibrary.Pathes;
         @{
             if (!Directory.Exists(pathToDataDirectory))
             {
