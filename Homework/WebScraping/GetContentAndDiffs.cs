@@ -9,6 +9,7 @@ using System.Net;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using static ClassLibrary.Pathes;
+using System.Threading.Tasks;
 
 namespace WebScraping
 {
@@ -63,6 +64,8 @@ namespace WebScraping
             string k = args[2]; // На сколько недель нужна домашка?
             int count = Convert.ToInt32(k);
 
+            // Пока этот эффект никак не используется
+            //CheckIfNewWeekEffect(pathToDataDirectory);
             for (int i = 0; i < count; i++)
             {
                 if (i != 0)
@@ -70,44 +73,9 @@ namespace WebScraping
                     last = last.AddDays(-7);
                     next = next.AddDays(-7);
                 }
-                string lastStr = last.ToString("dd.MM.yyyy");
-                string nextStr = next.ToString("dd.MM.yyyy");
-
-                string jsonContentAsString = "";
-                HttpResponseMessage response;
-                int connectionCount = 0;
-                bool success = false;
-                string link = $"/api/journal/lesson/list-by-education?p_limit=100&p_page=1&p_datetime_from={lastStr}&p_datetime_to={nextStr}&p_groups%5B%5D=5881&p_educations%5B%5D=15622";
-                var baseAddress = new Uri("https://dnevnik2.petersburgedu.ru");
-                var cookieContainer = new CookieContainer();
-                var handler = new HttpClientHandler() { CookieContainer = cookieContainer };
-                var client = new HttpClient(handler) { BaseAddress = baseAddress };
-
-                cookieContainer.Add(baseAddress, cookie);
-                while (!success && connectionCount < 10)
-                {
-                    try
-                    {
-                        response = await client.GetAsync(link);
-                        response.EnsureSuccessStatusCode();
-                        jsonContentAsString = await response.Content.ReadAsStringAsync();
-                        success = true;
-                    }
-                    catch (HttpRequestException err) when (err.Message.IndexOf("401") > -1)
-                    {
-                        connectionCount++;
-                        Log.Information("Файл cookie устарел. Авторизация.");
-                        cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
-                        cookieContainer = new CookieContainer();
-                        cookieContainer.Add(baseAddress, cookie);
-                        handler = new HttpClientHandler() { CookieContainer = cookieContainer };
-                        client = new HttpClient(handler) { BaseAddress = baseAddress };
-                    }
-                }
-
+                string jsonContentAsString = GetDataFromServer(cookie, last, next, pathToCookieFile, args).Result;
                 string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                 EnsureDirectoryExists(currentWeekPath);
-
 
                 var lastFile = new DirectoryInfo(currentWeekPath)
                                     .GetFiles()
@@ -219,6 +187,74 @@ namespace WebScraping
             {
                 Directory.CreateDirectory(directory);
             }
+        }
+
+        private static bool CheckIfNewWeekEffect(string pathToDataDirectory)
+        {
+            var today = DateTime.Now;
+            var monday = today;
+            while (monday.DayOfWeek != DayOfWeek.Monday)
+            {
+                monday = monday.AddDays(-1);
+            }
+
+            var diffToMonday = (today - monday).TotalDays;
+            var dirs = Directory.GetDirectories(pathToDataDirectory);
+            foreach (var dir in dirs)
+            {
+                var curFiles = new DirectoryInfo(dir).GetFiles();
+                var file = curFiles.Where(file => file.Name == "0.json").SingleOrDefault();
+                if (file != null)
+                {
+                    var fileModifyDate = new FileInfo(file.FullName).LastWriteTime.Date;
+                    var diffToFile = (today - fileModifyDate).TotalDays;
+                    if(diffToFile > diffToMonday)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static async Task<string> GetDataFromServer(Cookie cookie, DateTime last, DateTime next, string pathToCookieFile, string[] args)
+        {
+            string jsonContentAsString = "";
+            string lastStr = last.ToString("dd.MM.yyyy");
+            string nextStr = next.ToString("dd.MM.yyyy");
+            HttpResponseMessage response;
+            int connectionCount = 0;
+            bool success = false;
+            string link = $"/api/journal/lesson/list-by-education?p_limit=100&p_page=1&p_datetime_from={lastStr}&p_datetime_to={nextStr}&p_groups%5B%5D=5881&p_educations%5B%5D=15622";
+            var baseAddress = new Uri("https://dnevnik2.petersburgedu.ru");
+            var cookieContainer = new CookieContainer();
+            var handler = new HttpClientHandler() { CookieContainer = cookieContainer };
+            var client = new HttpClient(handler) { BaseAddress = baseAddress };
+
+            cookieContainer.Add(baseAddress, cookie);
+            while (!success && connectionCount < 10)
+            {
+                try
+                {
+                    response = await client.GetAsync(link);
+                    response.EnsureSuccessStatusCode();
+                    jsonContentAsString = await response.Content.ReadAsStringAsync();
+                    success = true;
+                    return jsonContentAsString;
+                }
+                catch (HttpRequestException err) when (err.Message.IndexOf("401") > -1)
+                {
+                    connectionCount++;
+                    Log.Information("Файл cookie устарел. Авторизация.");
+                    cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
+                    cookieContainer = new CookieContainer();
+                    cookieContainer.Add(baseAddress, cookie);
+                    handler = new HttpClientHandler() { CookieContainer = cookieContainer };
+                    client = new HttpClient(handler) { BaseAddress = baseAddress };
+                }
+            }
+
+            return jsonContentAsString; // will returns "";
         }
 
         private static void ConfigureLogger()

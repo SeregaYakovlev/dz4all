@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace WebScraping
 {
@@ -15,9 +12,6 @@ namespace WebScraping
         {
             return data.GetDiffs(newTree.data);
         }
-        /*public object[] validations { get; set; }
-public object[] messages { get; set; }
-public object[] debug { get; set; }*/
     }
 
     public class Data
@@ -32,13 +26,13 @@ public object[] debug { get; set; }*/
             {
                 if (joinEntry.old == null)
                 {
-                    joinEntry.@new.subject_type("new");
-                    yield return joinEntry;// "new: " + joinEntry.@new.subject_name.ToString();
+                    joinEntry.@new.SubjectStatus = "new";
+                    yield return joinEntry;
                 }
                 else if (joinEntry.@new == null)
                 {
-                    joinEntry.old.subject_type("deleted");
-                    yield return joinEntry;// "delete: " + joinEntry.old.subject_name.ToString();
+                    joinEntry.old.SubjectStatus = "deleted";
+                    yield return joinEntry;
                 }
                 else
                 {
@@ -50,8 +44,8 @@ public object[] debug { get; set; }*/
                         {
                             if (diff.task_name.Any())
                             {
-                                joinEntry.old.homework_type("changed");
-                                joinEntry.@new.homework_type("changed");
+                                joinEntry.old.HomeworkStatus = "changed";
+                                joinEntry.@new.HomeworkStatus = "changed";
                             };
                         }
 
@@ -60,27 +54,14 @@ public object[] debug { get; set; }*/
                 }
             }
         }
-        /*public int before { get; set; }
-public int current { get; set; }
-public int last { get; set; }
-public int next { get; set; }
-public int total_pages { get; set; }
-public int total_items { get; set; }*/
-
-
     }
 
     public class Item
     {
-        //public Identity identity { get; set; }
         public int number { get; set; }
-        //private string dateTotal;
-        
         public string datetime_from { get; set; }
-        //public string datetime_to { get; set; }
-        //public int subject_id { get; set; }
         public string subject_name { get; set; }
-        
+
         public string updateTime
         {
             get
@@ -88,35 +69,10 @@ public int total_items { get; set; }*/
                 return DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
             }
         }
-        private string subjectStatus;
-        private string homeworkStatus;
-        public string SubjectStatus
-        {
-            get
-            {
-                return subjectStatus;
-            }
-        }
-        public string HomeworkStatus
-        {
-            get
-            {
-                return homeworkStatus;
-            }
-        }
-        public void subject_type(string subjectSt)
-        {
-            subjectStatus = subjectSt;
-        }
-        public void homework_type(string homeworkSt)
-        {
-            homeworkStatus = homeworkSt;
-        }
+        public string SubjectStatus { get; set; }
+        public string HomeworkStatus { get; set; }
         public string content_name { get; set; }
         public Task[] tasks { get; set; }
-        //public Estimate[] estimates { get; set; }
-
-
 
         public IEnumerable<Task> GetDiffs(Item other)
         {
@@ -133,29 +89,12 @@ public int total_items { get; set; }*/
         }
     }
 
-    /*public class Identity
-    {
-        public int id { get; set; }
-        public object uid { get; set; }
-    }*/
-
     public class Task
     {
         public string task_name { get; set; }
-        /*public object task_code { get; set; }
-        public string task_kind_code { get; set; }
-        public string task_kind_name { get; set; }*/
 
     }
 
-    /*public class Estimate
-    {
-        public string estimate_type_code { get; set; }
-        public string estimate_type_name { get; set; }
-        public string estimate_value_code { get; set; }
-        public string estimate_value_name { get; set; }
-        public object estimate_comment { get; set; }
-    }*/
     internal static class MyExtensions
     {
         internal static IEnumerable<TResult> FullOuterJoin<TA, TB, TKey, TResult>(
