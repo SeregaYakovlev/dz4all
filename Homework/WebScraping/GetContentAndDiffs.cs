@@ -15,6 +15,7 @@ namespace WebScraping
 {
     class GetContentAndDiffs
     {
+        private static Cookie cookie;
         private static async System.Threading.Tasks.Task Main(string[] args)
         {
             string pathToCookieFile = Path.Combine(pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
@@ -24,7 +25,6 @@ namespace WebScraping
             await InstallBrowserAsync();
 
             string cookieFile;
-            Cookie cookie;
             if (File.Exists(pathToCookieFile))
             {
                 using (var reader = new StreamReader(pathToCookieFile))
@@ -73,7 +73,7 @@ namespace WebScraping
                     last = last.AddDays(-7);
                     next = next.AddDays(-7);
                 }
-                string jsonContentAsString = GetDataFromServer(cookie, last, next, pathToCookieFile, args).Result;
+                string jsonContentAsString = GetDataFromServer(last, next, pathToCookieFile, args).Result;
                 string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                 EnsureDirectoryExists(currentWeekPath);
 
@@ -83,88 +83,8 @@ namespace WebScraping
                                     .Where(file => file.Name != "diffs.json")
                                     .FirstOrDefault();
 
-                if (lastFile != null && jsonContentAsString != "")
-                {
-                    string readedFile;
-                    using (var reader = new StreamReader(lastFile.FullName))
-                    {
-                        readedFile = reader.ReadToEnd();
-                    }
-                    var oldTree = JsonConvert.DeserializeObject<Rootobject>(readedFile);
-                    var newTree = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsString);
-                    var result = oldTree.GetDiffs(newTree);
-                    // Item1(old) - файлы, Item2(@new) - электронный дневник
+                GetDiffsContent(lastFile, currentWeekPath, jsonContentAsString);
 
-                    string currentDiffsFileToWrite = Path.Combine(currentWeekPath, "diffs.json");
-                    if (result.Any())
-                    {
-                        var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, "diffs.json");
-                        if (!currentDiffsFileForReading.Any())
-                        {
-                            var convertToJson = JsonConvert.SerializeObject(result);
-                            await File.WriteAllTextAsync(currentDiffsFileToWrite, convertToJson);
-                        }
-                        else
-                        {
-                            string readedDiffsFile;
-
-                            using (var reader = new StreamReader(currentDiffsFileForReading.Single()))
-                            {
-                                readedDiffsFile = await reader.ReadToEndAsync();
-                            }
-                            var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item, Item)>>(readedDiffsFile);
-
-                            var concatedObj = parsedFile.Concat(result);
-
-                            var dateTimeList = new List<DateTime>();
-                            foreach (var items in concatedObj)
-                            {
-                                string dateTime1;
-                                string dateTime2;
-                                DateTime dateTime1AsDateTime;
-                                DateTime dateTime2AsDateTime;
-                                if (items.Item1 != null)
-                                {
-                                    dateTime1 = items.Item1.datetime_from;
-                                    dateTime1AsDateTime = DateTime.ParseExact(dateTime1, "dd.MM.yyyy HH:mm:ss", null);
-                                    dateTimeList.Add(dateTime1AsDateTime);
-                                }
-                                if (items.Item2 != null)
-                                {
-                                    dateTime2 = items.Item2.datetime_from;
-                                    dateTime2AsDateTime = DateTime.ParseExact(dateTime2, "dd.MM.yyyy HH:mm:ss", null);
-                                    dateTimeList.Add(dateTime2AsDateTime);
-                                }
-                            }
-                            var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
-
-                            var item1 = concatedObj.Where(time =>
-                            {
-                                if (time.Item1 != null)
-                                {
-                                    var timeAsDateTime = DateTime.ParseExact(time.Item1.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                    return timeAsDateTime >= maxDateTimeSaved;
-                                }
-                                else return false;
-                            });
-                            var item2 = concatedObj.Where(time =>
-                            {
-                                if (time.Item2 != null)
-                                {
-                                    var timeAsDateTime = DateTime.ParseExact(time.Item2.datetime_from, "dd.MM.yyyy HH:mm:ss", null);
-                                    return timeAsDateTime >= maxDateTimeSaved;
-                                }
-                                else return false;
-                            });
-                            var newData = JsonConvert.SerializeObject(item1.Concat(item2));
-
-                            if (newData.Any())
-                            {
-                                await File.WriteAllTextAsync(currentDiffsFileToWrite, newData);
-                            }
-                        }
-                    }
-                }
                 var currentWeekDirectoryFiles = new DirectoryInfo(currentWeekPath)
                     .GetFiles();
                 var needToDelete = currentWeekDirectoryFiles.Where(file => file.Name != "diffs.json");
@@ -174,12 +94,81 @@ namespace WebScraping
                 }
                 string fileName = "0.json";
                 var path = Path.Combine(currentWeekPath, fileName);
-
-                await File.WriteAllTextAsync(path, jsonContentAsString);
+                WriteToFile(path, jsonContentAsString);
                 Log.Information($"Файл создан: {fileName}");
             }
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
+        }
+
+        private static async void GetDiffsContent(FileInfo lastFile, string currentWeekPath, string jsonContentAsString)
+        {
+            if (lastFile != null && jsonContentAsString != "")
+            {
+                string readedFile;
+                using (var reader = new StreamReader(lastFile.FullName))
+                {
+                    readedFile = reader.ReadToEnd();
+                }
+                var oldTree = JsonConvert.DeserializeObject<Rootobject>(readedFile);
+                var newTree = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsString);
+                var result = oldTree.GetDiffs(newTree);
+                // Item1(old) - файлы, Item2(@new) - электронный дневник
+
+                string currentDiffsFileToWrite = Path.Combine(currentWeekPath, "diffs.json");
+                if (result.Any())
+                {
+                    var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, "diffs.json");
+                    if (!currentDiffsFileForReading.Any())
+                    {
+                        var convertToJson = JsonConvert.SerializeObject(result);
+                        await File.WriteAllTextAsync(currentDiffsFileToWrite, convertToJson);
+                    }
+                    else
+                    {
+                        string readedDiffsFile;
+                        using (var reader = new StreamReader(currentDiffsFileForReading.Single()))
+                        {
+                            readedDiffsFile = await reader.ReadToEndAsync();
+                        }
+                        var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item old, Item @new)>>(readedDiffsFile);
+
+                        var concatedObj = parsedFile.Concat(result);
+
+                        var dateTimeList = new List<DateTime>();
+                        foreach (var homework in concatedObj)
+                        {
+                            string dateTime;
+                            DateTime dateTimeAsDateTime;
+                            var notEmptyItem = (homework.old ?? homework.@new);
+                            if ((notEmptyItem) != null)
+                            {
+                                dateTime = notEmptyItem.datetime_from;
+                                dateTimeAsDateTime = dateTimeAsDateTime = DateTime.ParseExact(dateTime, "dd.MM.yyyy HH:mm:ss", null);
+                                dateTimeList.Add(dateTimeAsDateTime);
+                            }
+                        }
+                        var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+
+                        var recentItemsOnly = concatedObj.Where(changedHomework =>
+                        {
+                            var timeAsDateTime = DateTime.ParseExact((changedHomework.old ?? changedHomework.@new).datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                            return timeAsDateTime >= maxDateTimeSaved;
+                        });
+
+                        var newData = JsonConvert.SerializeObject(recentItemsOnly);
+
+                        if (newData.Any())
+                        {
+                            WriteToFile(currentDiffsFileToWrite, newData);
+                        }
+                    }
+                }
+            }
+        }
+        private static async void WriteToFile(string path, string content)
+        {
+            await File.WriteAllTextAsync(path, content);
         }
         private static void EnsureDirectoryExists(string directory)
         {
@@ -188,7 +177,6 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
-
         private static bool CheckIfNewWeekEffect(string pathToDataDirectory)
         {
             var today = DateTime.Now;
@@ -208,7 +196,7 @@ namespace WebScraping
                 {
                     var fileModifyDate = new FileInfo(file.FullName).LastWriteTime.Date;
                     var diffToFile = (today - fileModifyDate).TotalDays;
-                    if(diffToFile > diffToMonday)
+                    if (diffToFile > diffToMonday)
                     {
                         return true;
                     }
@@ -216,8 +204,7 @@ namespace WebScraping
             }
             return false;
         }
-
-        private static async Task<string> GetDataFromServer(Cookie cookie, DateTime last, DateTime next, string pathToCookieFile, string[] args)
+        private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile, string[] args)
         {
             string jsonContentAsString = "";
             string lastStr = last.ToString("dd.MM.yyyy");
@@ -228,35 +215,33 @@ namespace WebScraping
             string link = $"/api/journal/lesson/list-by-education?p_limit=100&p_page=1&p_datetime_from={lastStr}&p_datetime_to={nextStr}&p_groups%5B%5D=5881&p_educations%5B%5D=15622";
             var baseAddress = new Uri("https://dnevnik2.petersburgedu.ru");
             var cookieContainer = new CookieContainer();
-            var handler = new HttpClientHandler() { CookieContainer = cookieContainer };
-            var client = new HttpClient(handler) { BaseAddress = baseAddress };
-
             cookieContainer.Add(baseAddress, cookie);
             while (!success && connectionCount < 10)
             {
                 try
                 {
-                    response = await client.GetAsync(link);
-                    response.EnsureSuccessStatusCode();
-                    jsonContentAsString = await response.Content.ReadAsStringAsync();
+                    using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+                    using (var client = new HttpClient(handler) { BaseAddress = baseAddress })
+                    {
+                        response = await client.GetAsync(link);
+                        response.EnsureSuccessStatusCode();
+                        jsonContentAsString = await response.Content.ReadAsStringAsync();
+                    }
                     success = true;
                     return jsonContentAsString;
                 }
                 catch (HttpRequestException err) when (err.Message.IndexOf("401") > -1)
                 {
+
                     connectionCount++;
                     Log.Information("Файл cookie устарел. Авторизация.");
                     cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
                     cookieContainer = new CookieContainer();
                     cookieContainer.Add(baseAddress, cookie);
-                    handler = new HttpClientHandler() { CookieContainer = cookieContainer };
-                    client = new HttpClient(handler) { BaseAddress = baseAddress };
                 }
             }
-
             return jsonContentAsString; // will returns "";
         }
-
         private static void ConfigureLogger()
         {
             var logConfig = new LoggerConfiguration()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +9,7 @@ namespace WebScraping
     {
         public Data data { get; set; }
 
-        internal IEnumerable<(Item, Item)> GetDiffs(Rootobject newTree)
+        internal IEnumerable<(Item old, Item @new)> GetDiffs(Rootobject newTree)
         {
             return data.GetDiffs(newTree.data);
         }
@@ -20,23 +21,27 @@ namespace WebScraping
 
         internal IEnumerable<(Item, Item)> GetDiffs(Data data)
         {
-
             var join = items.FullOuterJoin(data.items, old => (old.subject_name, old.datetime_from), @new => (@new.subject_name, @new.datetime_from), (old, @new, key) => (old, @new));
             foreach (var joinEntry in join)
             {
-                if (joinEntry.old == null)
+                string dateTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+                bool oldEmpty = (joinEntry.old == null);
+                bool newEmpty = (joinEntry.@new == null);
+
+                if (!oldEmpty) joinEntry.old.updateTime = dateTime;
+                if (!newEmpty) joinEntry.@new.updateTime = dateTime;
+                if (oldEmpty)
                 {
                     joinEntry.@new.SubjectStatus = "new";
                     yield return joinEntry;
                 }
-                else if (joinEntry.@new == null)
+                else if (newEmpty)
                 {
                     joinEntry.old.SubjectStatus = "deleted";
                     yield return joinEntry;
                 }
                 else
                 {
-
                     var diffs = joinEntry.old.GetDiffs(joinEntry.@new);
                     if (diffs.Any())
                     {
@@ -48,7 +53,6 @@ namespace WebScraping
                                 joinEntry.@new.HomeworkStatus = "changed";
                             };
                         }
-
                         yield return joinEntry;
                     }
                 }
@@ -62,13 +66,7 @@ namespace WebScraping
         public string datetime_from { get; set; }
         public string subject_name { get; set; }
 
-        public string updateTime
-        {
-            get
-            {
-                return DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
-            }
-        }
+        public string updateTime { get; set; }
         public string SubjectStatus { get; set; }
         public string HomeworkStatus { get; set; }
         public string content_name { get; set; }
@@ -80,9 +78,11 @@ namespace WebScraping
             {
                 throw new InvalidOperationException();
             }
-
-            if (string.Join("", tasks.Select(t => t.task_name)) != string.Join("", other.tasks.Select(t => t.task_name)))
+            string old = string.Join("", tasks.Select(t => t.task_name));
+            string @new = string.Join("", other.tasks.Select(t => t.task_name));
+            if (old != @new)
             {
+                if (@new == "") return tasks;
                 return other.tasks;
             }
             return Enumerable.Empty<Task>();

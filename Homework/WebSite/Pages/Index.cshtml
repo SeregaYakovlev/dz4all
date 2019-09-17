@@ -213,11 +213,12 @@
                                 <span class="subject">@subject:</span>
                                 <br />
                                 <span class="lesson_content">@lesson_content</span>
+                                <br class="br" />
                                 foreach (var task in tasks)
                                 {
                                     var homework = task["task_name"].ToString();
-                                    <br class="br" />
                                     <span class="homework">Дз: @homework</span>
+                                    <br />
                                 }
                                 if (diffsJson != null)
                                 {
@@ -233,38 +234,35 @@
                                             var status = item2["SubjectStatus"].ToString();
                                             var homeworkStatus = item2["HomeworkStatus"].ToString();
 
-
                                             if (subjectName == subject && datetime == datetimeFrom)
                                             {
-                                                if (status == "new" && tasks.Any())
+                                                if (status == "new" && item2["tasks"].Any())
                                                 {
-                                                    <br />
                                                     <span class="dzAdded">Домашка появилась @updateTime</span>
-                                                }
-                                                else if (!tasks.Any() && item2["tasks"].Any())
-                                                {
-                                                    <br />
-                                                    <span class="dzDeleted">Домашка удалена @updateTime</span>
-                                                    foreach (var task in item2["tasks"])
-                                                    {
-                                                        <br />
-                                                        <span class="dzDeleted">Дз: @task.ToString()</span>
-                                                    }
                                                 }
                                                 else if (homeworkStatus == "changed")
                                                 {
 
-                                                    if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
+                                                    if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <br />
                                                         <span class="dzChanged">Домашка изменена @updateTime</span>
                                                     }
-                                                    else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any() && tasks.Any())
+                                                    else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <br />
                                                         <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>
                                                     }
-
+                                                    else if (item1.Any() && !item2["tasks"].Any() && item1["tasks"].Any())
+                                                    {
+                                                        /* Вверху дз, скорее всего, не будет.
+                                                         * Лишняя строка. Поэтому стоит class "br"
+                                                         * А если будет, то будут и другие события вместе с этим.*/
+                                                        <span class="dzDeleted">Домашка удалена @updateTime</span>
+                                                        foreach (var task in item1["tasks"])
+                                                        {
+                                                            <br /> 
+                                                            <span class="dzDeleted">Дз(удалено): @task["task_name"].ToString()</span>
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
