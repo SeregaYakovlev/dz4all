@@ -12,12 +12,10 @@ window.onerror = function (message, url, lineNumber) {
 
 document.addEventListener("DOMContentLoaded", function () {
     checkAuthorization();
-    setIconOfOptionsAsClickable();
     setStatusOfCheckboxOfLessonContent();
-    setStatusOfCheckboxOfHomeworkNotifications();
+    //setStatusOfCheckboxOfHomeworkNotifications();
     //setStatusOfCheckboxOfDoneHomework();
     doctypeForDevelopers();
-    deleteEmptyPaintedElements();
     setListenersOfEvents();
 })
 
@@ -34,7 +32,7 @@ function setListenersOfEvents() {
         }
     }
 
-    document.getElementById("ShowHomeworkNotifications").onchange = function () {
+    /*document.getElementById("ShowHomeworkNotifications").onchange = function () {
         var checked = this.checked;
         if (checked === true) {
             ChangeDisplayStatusOfHomeworkNotifications("inline", "");
@@ -44,7 +42,7 @@ function setListenersOfEvents() {
             ChangeDisplayStatusOfHomeworkNotifications("none", "none");
             setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
         }
-    }
+    }*/
 
     /*document.getElementById("ShowDoneHomework").onchange = function () {
         var checked = this.checked;
@@ -185,7 +183,7 @@ function ChangeDisplayStatusOfDoneHomework(param) {
 }
 function setHomeworkAsDoneOrDeleteIfClick(cell) {
     var cellAsString = CalculateCellAsString(cell, ".subject, .homework");
-    if (!cell.classList.contains("DoneHomework")) {
+    if (!cell.classList.contains("DoneHomework") && cellAsString !== "") {
         cell.classList.add("DoneHomework");
         var array = getInfoFromLocalStorage("DoneHomework") || new Array();
         array.push(cellAsString);
@@ -272,7 +270,21 @@ function doctypeForDevelopers() {
             show();
             console.log("You are using doctype for developers");
 
-            document.getElementById("InputDoneHomework").style.display = "inline";
+            document.getElementById("CheckboxInputDoneHomework").style.display = "inline";
+            document.getElementById("CheckboxHomeworkNotifications").style.display = "inline";
+
+            document.getElementById("ShowHomeworkNotifications").onchange = function () {
+                var checked = this.checked;
+                if (checked === true) {
+                    ChangeDisplayStatusOfHomeworkNotifications("inline", "");
+                    setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "on");
+                }
+                else {
+                    ChangeDisplayStatusOfHomeworkNotifications("none", "none");
+                    setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
+                }
+            }
+
             document.getElementById("ShowDoneHomework").onchange = function () {
                 var checked = this.checked;
                 if (checked === true) {
@@ -285,37 +297,8 @@ function doctypeForDevelopers() {
                 }
             }
             setStatusOfCheckboxOfDoneHomework();
+            setStatusOfCheckboxOfHomeworkNotifications();
             return;
-        }
-    }
-}
-
-function deleteEmptyPaintedElements() {
-    /* Для чего эта функция нужна:
-     * Дело в том, что все ячейки строки удаленных предметов(delObjects in Index.cshtml) с домашкой желтые.
-     * Но ячейки могут быть пустыми. => Эта функция убирает пустые желтые ячейки,
-     * чтобы желтым цветом подсвечивались только удаленные предметы с домашкой.*/
-
-    var delElements = document.getElementsByClassName("paintedDelSubjectCell");
-    var delElement;
-    for (var x = 0; x < delElements.length; x++) {
-        delElement = delElements[x];
-        if (delElement.textContent === "") {
-            delElement.classList.remove("paintedDelSubjectCell");
-            x--; // уменьшается длина delElements, уменьшается и индекс.
-        }
-    }
-}
-
-function setIconOfOptionsAsClickable() {
-    document.getElementById("options").onclick = function () {
-        var options = document.getElementById("form");
-        var visible = options.style.display;
-        if (visible !== "inline") {
-            options.style.display = "inline";
-        }
-        else {
-            options.style.display = "none";
         }
     }
 }

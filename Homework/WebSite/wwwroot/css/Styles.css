@@ -23,6 +23,10 @@ caption {
     margin-left: 8px;
 }
 
+footer {
+    margin-top: -20px;
+}
+
 #siteInfo {
     color: blue;
     text-align: center;
@@ -34,25 +38,13 @@ caption {
     display: none;
 }
 
-#form {
+#CheckboxInputDoneHomework, #CheckboxHomeworkNotifications {
     display: none;
 }
 
-#InputDoneHomework {
-    display: none;
-}
-
-#options {
-    width: 3%;
-}
-
-#deletedSubjectWithHomeworkImg, #HomeworkNotificationsImg {
-    /*page: info*/
-    width: 15%;
-}
-
-.fileModifiedTime {
-    text-align: center;
+.ltd {
+    color: grey;
+    font-size: 11px;
 }
 
 .announcement {
@@ -90,6 +82,7 @@ caption {
     font-family: Roboto-bold,sans-serif;
 }
 .lesson_content {
+    /*Класс не применяется для темы урока с классом dzDeleted.*/
     font-family: Roboto,sans-serif;
     color: #7d7e86;
     font-size: 14px;
@@ -139,11 +132,6 @@ caption {
     font-weight: 400;
     line-height: normal;
     font-family: Roboto-bold,sans-serif;
-}
-
-.paintedDelSubjectCell {
-    /*относится к классу delSubjectCell*/
-    background-color: #FFFDD0;
 }
 
 .DoneHomework {

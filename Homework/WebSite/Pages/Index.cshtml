@@ -49,7 +49,7 @@
                 <br />
                 4) Если ничего не помогло - обращайтесь:
                 <br />
-                <a href="https://t.me/joinchat/IQHB1Efqq0KVXCFs4O5EDQ">Техподдержка dz4all.ru</a>
+                <a href="https://vk.com/sergo.yakovlev">Моя страница ВК</a>
             </p>
         </div>
     </noscript>
@@ -76,18 +76,7 @@
         затем обратно на сайт.
     </p>
     <div id="content">
-        <img src="~/img/optionsIcon.png" alt="Настройки" id="options" />
-        <form id="form">
-            <br />
-            <input type="checkbox" id="ShowLessonContent" />Темы уроков
-            <br />
-            <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
-            <br />
-            <!--<input type="checkbox" id="ShowDoneHomework" />Готовые дз-->
-            <span id="InputDoneHomework">
-                <input type="checkbox" id="ShowDoneHomework" />Готовые дз
-            </span>
-        </form>
+
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @using System.Linq;
@@ -259,7 +248,7 @@
                                                         <span class="dzDeleted">Домашка удалена @updateTime</span>
                                                         foreach (var task in item1["tasks"])
                                                         {
-                                                            <br /> 
+                                                            <br />
                                                             <span class="dzDeleted">Дз(удалено): @task["task_name"].ToString()</span>
                                                         }
                                                     }
@@ -286,7 +275,7 @@
                                 {
                                     var weekDate = DateTime.ParseExact(weekDay.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
                                     var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                    @Html.Raw("<td class='delSubjectCell paintedDelSubjectCell'>");
+                                    @Html.Raw("<td class='delSubjectCell'>");
                                     if (weekDate == delDate)
                                     {
 
@@ -294,16 +283,19 @@
                                         var lesson_content = item1["content_name"].ToString();
                                         var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                         var tasks = item1["tasks"];
-                                        <span class="dzDeleted">Предмет с домашкой удалён @updateTime</span>
-                                        <br />
-                                        <span class="subject">@subject</span>
-                                        <br />
-                                        <span class="lesson_content">@lesson_content</span>
-                                        foreach (var task in tasks)
-                                        {
+                                        <p class="dzDeleted">
+                                            <span>Предмет с домашкой удалён @updateTime</span>
+                                            <br />
+                                            <span>@subject:</span>
+                                            <br />
+                                            <span class="lesson_content" style="all: inherit">@lesson_content</span>
                                             <br class="br" />
-                                            <span class="homework">Дз: @task["task_name"].ToString()</span>
-                                        }
+                                            @foreach (var task in tasks)
+                                            {
+                                                <span class="dzDeleted">Дз: @task["task_name"].ToString()</span>
+                                                <br />
+                                            }
+                                        </p>
                                     }
                                     @Html.Raw("</td>");
                                 }
@@ -334,16 +326,33 @@
                     updateTimeList.Add(currentDirectoryUpdateTime);
                 }
                 var minTime = updateTimeList.Min().ToString("d.MM H:mm");
-                <p class="announcement">Электронный дневник пустой c @minTime</p>
+                <p class="announcement">Электронный дневник пустой на @minTime</p>
             }
         }
     </div>
     <footer>
-        <p>
-            Информация о сайте:
+        <form id="form">
+            <input type="checkbox" id="ShowLessonContent" />Темы уроков
             <br />
-            <a href="/info">Как пользоваться сайтом</a>
-        </p>
+            <span id="CheckboxHomeworkNotifications">
+                <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
+                <br />
+            </span>
+            <!--<input type="checkbox" id="ShowHomeworkNotifications" />События домашки-->
+            <!--<br />-->
+            <!--<input type="checkbox" id="ShowDoneHomework" />Готовые дз-->
+            <span id="CheckboxInputDoneHomework">
+                <input type="checkbox" id="ShowDoneHomework" />Готовые дз
+            </span>
+        </form>
+
+        <span class="ltd">
+            Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.
+            <br />
+            Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
+            <br />
+            Разработчик: Сергей Яковлев, 2019
+        </span>
     </footer>
 </body>
 </html>

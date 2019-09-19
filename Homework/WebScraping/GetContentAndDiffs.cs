@@ -179,6 +179,7 @@ namespace WebScraping
         }
         private static bool CheckIfNewWeekEffect(string pathToDataDirectory)
         {
+            bool isEffect = false;
             var today = DateTime.Now;
             var monday = today;
             while (monday.DayOfWeek != DayOfWeek.Monday)
@@ -198,11 +199,23 @@ namespace WebScraping
                     var diffToFile = (today - fileModifyDate).TotalDays;
                     if (diffToFile > diffToMonday)
                     {
-                        return true;
+                        var diffFromFileToMonday = diffToFile - diffToMonday;
+                        if ((diffFromFileToMonday) <= 7)
+                        {
+                            isEffect = true;
+                        }
+                        else if(diffFromFileToMonday > 7)
+                        {
+                            throw new Exception($"The program can not be runned because the last write time of files is earlier than 1 week ago. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
+                        }
+                    }
+                    else if(diffToFile <= diffToMonday)
+                    {
+                        if (isEffect) throw new Exception("The last write time of one files is earlier of that week. The last write time of another files is later than the last week. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
                     }
                 }
             }
-            return false;
+            return isEffect;
         }
         private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile, string[] args)
         {

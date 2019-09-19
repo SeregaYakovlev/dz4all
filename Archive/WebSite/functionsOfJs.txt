@@ -1,3 +1,16 @@
+function setIconOfOptionsAsClickable() {
+    document.getElementById("options").onclick = function () {
+        var options = document.getElementById("form");
+        var visible = options.style.display;
+        if (visible !== "inline") {
+            options.style.display = "inline";
+        }
+        else {
+            options.style.display = "none";
+        }
+    }
+}
+
 function SetCookie(name, value, expires) {
     console.log("SetCookie");
     var now = new Date();
@@ -64,4 +77,21 @@ function checkIfCellsAreEmpty(row) {
             }
         }
         return !isCellEmpty;
+}
+
+function deleteEmptyPaintedElements() {
+    /* ƒл€ чего эта функци€ нужна:
+     * ƒело в том, что все €чейки строки удаленных предметов(delObjects in Index.cshtml) с домашкой желтые.
+     * Ќо €чейки могут быть пустыми. => Ёта функци€ убирает пустые желтые €чейки,
+     * чтобы желтым цветом подсвечивались только удаленные предметы с домашкой.*/
+
+    var delElements = document.getElementsByClassName("paintedDelSubjectCell");
+    var delElement;
+    for (var x = 0; x < delElements.length; x++) {
+        delElement = delElements[x];
+        if (delElement.textContent === "") {
+            delElement.classList.remove("paintedDelSubjectCell");
+            x--; // уменьшаетс€ длина delElements, уменьшаетс€ и индекс.
+        }
+    }
 }

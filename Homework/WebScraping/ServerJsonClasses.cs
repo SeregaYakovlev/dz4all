@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -76,7 +75,7 @@ namespace WebScraping
         {
             if (!subject_name.Equals(other.subject_name) || !datetime_from.Equals(other.datetime_from))
             {
-                throw new InvalidOperationException();
+                throw new Exception("the subject_name or the datetime_from != the other.subject_name or the other.datetime_from");
             }
             string old = string.Join("", tasks.Select(t => t.task_name));
             string @new = string.Join("", other.tasks.Select(t => t.task_name));
