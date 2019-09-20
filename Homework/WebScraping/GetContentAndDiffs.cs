@@ -64,10 +64,21 @@ namespace WebScraping
             string k = args[2]; // На сколько недель нужна домашка?
             int count = Convert.ToInt32(k);
 
-            // Пока этот эффект никак не используется
-            //CheckIfNewWeekEffect(pathToDataDirectory);
-            for (int i = 0; i < count; i++)
+            var newWeekEffect = CheckIfNewWeekEffect(pathToDataDirectory);
+            int i = 0;
+            if (newWeekEffect.isEffect)
             {
+                for (int j = 0; j < newWeekEffect.numberOfPastWeek; j++)
+                {
+                    var newWeekJson = GetDataFromServer(last, next, pathToCookieFile, args).Result;
+                    WriteToFile(Path.Combine(pathToDataDirectory, "0"), newWeekJson);
+                }
+                i = Convert.ToInt32(newWeekEffect.numberOfPastWeek);
+            }
+
+            for (; i < count; i++)
+            {
+                Log.Information(i.ToString());
                 if (i != 0)
                 {
                     last = last.AddDays(-7);
@@ -80,18 +91,11 @@ namespace WebScraping
                 var lastFile = new DirectoryInfo(currentWeekPath)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
-                                    .Where(file => file.Name != "diffs.json")
+                                    .Where(file => file.Name == "0.json")
                                     .FirstOrDefault();
 
                 GetDiffsContent(lastFile, currentWeekPath, jsonContentAsString);
 
-                var currentWeekDirectoryFiles = new DirectoryInfo(currentWeekPath)
-                    .GetFiles();
-                var needToDelete = currentWeekDirectoryFiles.Where(file => file.Name != "diffs.json");
-                foreach (var file in needToDelete)
-                {
-                    File.Delete(file.FullName);
-                }
                 string fileName = "0.json";
                 var path = Path.Combine(currentWeekPath, fileName);
                 WriteToFile(path, jsonContentAsString);
@@ -177,14 +181,17 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
-        private static bool CheckIfNewWeekEffect(string pathToDataDirectory)
+        private static NewWeekEffectProperties CheckIfNewWeekEffect(string pathToDataDirectory)
         {
-            bool isEffect = false;
+            var newWeekEffectObj = new NewWeekEffectProperties();
+            newWeekEffectObj.numberOfPastWeek = 0;
+            newWeekEffectObj.isEffect = false;
+
             var today = DateTime.Now;
             var monday = today;
             while (monday.DayOfWeek != DayOfWeek.Monday)
             {
-                monday = monday.AddDays(-1);
+                monday = monday.AddDays(-1).Date;
             }
 
             var diffToMonday = (today - monday).TotalDays;
@@ -200,22 +207,18 @@ namespace WebScraping
                     if (diffToFile > diffToMonday)
                     {
                         var diffFromFileToMonday = diffToFile - diffToMonday;
-                        if ((diffFromFileToMonday) <= 7)
-                        {
-                            isEffect = true;
-                        }
-                        else if(diffFromFileToMonday > 7)
+                        var numberOfPastWeek = Math.Ceiling(diffFromFileToMonday / 7);
+                        if(newWeekEffectObj.numberOfPastWeek != 0 && numberOfPastWeek != newWeekEffectObj.numberOfPastWeek)
                         {
                             throw new Exception($"The program can not be runned because the last write time of files is earlier than 1 week ago. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
                         }
-                    }
-                    else if(diffToFile <= diffToMonday)
-                    {
-                        if (isEffect) throw new Exception("The last write time of one files is earlier of that week. The last write time of another files is later than the last week. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
+                        newWeekEffectObj.isEffect = true;
+                        newWeekEffectObj.numberOfPastWeek = numberOfPastWeek;
                     }
                 }
             }
-            return isEffect;
+            Log.Information($"Эффект новой недели: {newWeekEffectObj.isEffect}");
+            return newWeekEffectObj;
         }
         private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile, string[] args)
         {
@@ -277,5 +280,11 @@ namespace WebScraping
                 Console.WriteLine(); // Перевод курсора на следующую строку(чтобы небыло "100%Успешно")
             }
         }
+    }
+
+    public class NewWeekEffectProperties
+    {
+        public double numberOfPastWeek;
+        public bool isEffect;
     }
 }

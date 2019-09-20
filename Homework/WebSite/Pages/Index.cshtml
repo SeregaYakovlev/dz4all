@@ -227,25 +227,25 @@
                                             {
                                                 if (status == "new" && item2["tasks"].Any())
                                                 {
-                                                    <span class="dzAdded">Домашка появилась @updateTime</span>
+                                                    <span class="dzAdded" data-tooltip="Домашка появилась">П @updateTime</span>
                                                 }
                                                 else if (homeworkStatus == "changed")
                                                 {
 
                                                     if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzChanged">Домашка изменена @updateTime</span>
+                                                        <span class="dzChanged" data-tooltip="Домашка изменилась">И @updateTime</span>
                                                     }
                                                     else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzAdded">Домашка появилась(предмет раньше был) @updateTime</span>
+                                                        <span class="dzAdded" data-tooltip="Домашка появилась(предмет раньше был)">П(прб) @updateTime</span>
                                                     }
                                                     else if (item1.Any() && !item2["tasks"].Any() && item1["tasks"].Any())
                                                     {
                                                         /* Вверху дз, скорее всего, не будет.
                                                          * Лишняя строка. Поэтому стоит class "br"
                                                          * А если будет, то будут и другие события вместе с этим.*/
-                                                        <span class="dzDeleted">Домашка удалена @updateTime</span>
+                                                        <span class="dzDeleted" data-tooltip="Домашка удалена">У @updateTime</span>
                                                         foreach (var task in item1["tasks"])
                                                         {
                                                             <br />
@@ -284,7 +284,7 @@
                                         var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                         var tasks = item1["tasks"];
                                         <p class="dzDeleted">
-                                            <span>Предмет с домашкой удалён @updateTime</span>
+                                            <span data-tooltip="Домашка удалена">У @updateTime</span>
                                             <br />
                                             <span>@subject:</span>
                                             <br />
@@ -348,6 +348,12 @@
 
         <span class="ltd">
             Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.
+            <br />
+            Чтобы посмотреть расшифровку событий домашек:
+            <br />
+            На компе: подвести мышь к событию.
+            <br />
+            На смартфоне: Нажать на событие и удерживать. Клик куда-либо подсказку убирает.
             <br />
             Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
             <br />
