@@ -14,53 +14,9 @@ document.addEventListener("DOMContentLoaded", function () {
     checkAuthorization();
     setStatusOfCheckboxOfLessonContent();
     //setStatusOfCheckboxOfHomeworkNotifications();
-    //setStatusOfCheckboxOfDoneHomework();
     doctypeForDevelopers();
     setListenersOfEvents();
-    showToolLips();
 })
-
-function showToolLips() {
-    let tooltipElem;
-
-    document.onmouseover = function (event) {
-        let target = event.target;
-
-        // если у нас есть подсказка...
-        let tooltipHtml = target.dataset.tooltip;
-        if (!tooltipHtml) return;
-
-        // ...создадим элемент для подсказки
-
-        tooltipElem = document.createElement('div');
-        tooltipElem.className = 'tooltip';
-        tooltipElem.innerHTML = tooltipHtml;
-        document.body.append(tooltipElem);
-
-        // спозиционируем его сверху от аннотируемого элемента (top-center)
-        let coords = target.getBoundingClientRect();
-
-        let left = coords.left + (target.offsetWidth - tooltipElem.offsetWidth) / 2;
-        if (left < 0) left = 0; // не заезжать за левый край окна
-
-        let top = coords.top - tooltipElem.offsetHeight - 5;
-        if (top < 0) { // если подсказка не помещается сверху, то отображать её снизу
-            top = coords.top + target.offsetHeight + 5;
-        }
-
-        tooltipElem.style.left = left + 'px';
-        tooltipElem.style.top = top + 'px';
-    };
-
-    document.onmouseout = function (e) {
-
-        if (tooltipElem) {
-            tooltipElem.remove();
-            tooltipElem = null;
-        }
-
-    };
-}
 
 function setListenersOfEvents() {
     document.getElementById("ShowLessonContent").onchange = function () {
@@ -84,18 +40,6 @@ function setListenersOfEvents() {
         else {
             ChangeDisplayStatusOfHomeworkNotifications("none", "none");
             setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
-        }
-    }*/
-
-    /*document.getElementById("ShowDoneHomework").onchange = function () {
-        var checked = this.checked;
-        if (checked === true) {
-            ChangeDisplayStatusOfDoneHomework("add");
-            setInfoToLocalStorage("DisplayStatusOfDoneHomework", "on");
-        }
-        else {
-            ChangeDisplayStatusOfDoneHomework("remove");
-            setInfoToLocalStorage("DisplayStatusOfDoneHomework", "off");
         }
     }*/
 }
@@ -148,145 +92,6 @@ function ChangeDisplayStatusOfHomeworkNotifications(param1, param2) {
     }
 }
 
-function setStatusOfCheckboxOfDoneHomework() {
-    var checkbox = document.getElementById("ShowDoneHomework");
-    var checkboxValue = getInfoFromLocalStorage("DisplayStatusOfDoneHomework");
-    if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
-        ChangeDisplayStatusOfDoneHomework("add");
-        checkbox.checked = true;
-    }
-    else {
-        ChangeDisplayStatusOfDoneHomework("remove");
-        checkbox.checked = false;
-    }
-}
-function ChangeDisplayStatusOfDoneHomework(param) {
-    var elementsDoneHomework = document.getElementsByClassName("DoneHomework");
-
-    if (param === "remove") {
-        for (var i = 0; i < elementsDoneHomework.length; i++) {
-            elementsDoneHomework[i].classList.remove("DoneHomework");
-            i--;
-        }
-        setOrRemoveClickEventListenerOfDoneHomework("remove");
-    }
-    else if (param === "add") {
-        showDoneHomework();
-        setOrRemoveClickEventListenerOfDoneHomework("set");
-    }
-
-    function showDoneHomework() {
-        var table = document.getElementsByTagName("table");
-        var row;
-        var cell;
-        var cellAsString;
-        var storageArray = getInfoFromLocalStorage("DoneHomework");
-        if (storageArray != null) {
-            var ArrayExtraElements = []; // массив лишних элементов
-            ArrayExtraElements = storageArray.slice(0); // просто копируется storageArray
-            for (var i = 0; i < table.length; i++) {
-                for (var k = 1; k < table[i].rows.length; k++) {
-                    row = table[i].rows[k];
-                    for (var j = 0; j < row.cells.length; j++) {
-                        cell = row.cells[j];
-                        cellAsString = CalculateCellAsString(cell, ".subject, .homework");
-                        for (var storageIndex = 0; storageIndex < storageArray.length; storageIndex++) {
-                            if (storageArray[storageIndex] === cellAsString) {
-                                cell.classList.add("DoneHomework");
-                                /* Здесь удаляются элементы, которые понадобились.
-                                 * Берется один элемент массива лишних элементов,
-                                 * и по всем элементам массива localStorage проверяется,
-                                 * равен ли он какому-нибудь из них.
-                                 * Поскольку индексы у массивов для одних и тех же элементов разные,
-                                 * то нужно два цикла, чтобы их найти. */
-                                for (var extraIndex = 0; extraIndex < ArrayExtraElements.length; extraIndex++) {
-                                    if (storageArray[storageIndex] === ArrayExtraElements[extraIndex]) {
-                                        ArrayExtraElements.splice(extraIndex, 1);
-                                        // один элемент с индексом [extraIndex];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            /* Это нужно для удаления из хранилища старых элементов от прошлых недель, которых уже нет.
-             * Удаляется по той же схеме, что и выше. */
-            for (var storageInd = 0; storageInd < storageArray.length; storageInd++) {
-                for (var extraInd = 0; extraInd < ArrayExtraElements.length; extraInd++) {
-                    if (storageArray[storageInd] === ArrayExtraElements[extraInd]) {
-                        storageArray.splice(storageInd, 1);
-                        storageInd--; // уменьшается длина storageArray, уменьшается и индекс.
-                    }
-                }
-            }
-            setInfoToLocalStorage("DoneHomework", storageArray);
-        }
-    }
-}
-function setHomeworkAsDoneOrDeleteIfClick(cell) {
-    var cellAsString = CalculateCellAsString(cell, ".subject, .homework");
-    if (!cell.classList.contains("DoneHomework") && cellAsString !== "") {
-        cell.classList.add("DoneHomework");
-        var array = getInfoFromLocalStorage("DoneHomework") || new Array();
-        array.push(cellAsString);
-        setInfoToLocalStorage("DoneHomework", array);
-    }
-    else {
-        cell.classList.remove("DoneHomework");
-        var localStorageArray = getInfoFromLocalStorage("DoneHomework");
-        for (var element = 0; element < localStorageArray.length; element++) {
-            if (localStorageArray[element] !== cellAsString) continue;
-            else {
-                localStorageArray.splice(element, 1);
-                setInfoToLocalStorage("DoneHomework", localStorageArray);
-            }
-        }
-    }
-}
-function setOrRemoveClickEventListenerOfDoneHomework(param) {
-    var table = document.getElementsByTagName("table");
-    var row;
-    var cell;
-    //var isHomework;
-    for (var i = 0; i < table.length; i++) {
-        for (var k = 1; k < table[i].rows.length; k++) {
-            row = table[i].rows[k];
-            for (var j = 0; j < row.cells.length; j++) {
-                cell = row.cells[j];
-                //isHomework = cell.querySelector(".homework");
-                if (!cell.classList.contains("delSubjectCell") /*&& isHomework != null*/) {
-                    if (param === "set") {
-                        cell.onclick = function () {
-                            setHomeworkAsDoneOrDeleteIfClick(this);
-                        }
-                    }
-                    else if (param === "remove") {
-                        cell.onclick = null;
-                    }
-                }
-            }
-        }
-    }
-}
-function CalculateCellAsString(cell, selectors) {
-    var cellElements = cell.querySelectorAll(selectors);
-    var cellAsString = "";
-    var element;
-    var elementAsString;
-    for (var n = 0; n < cellElements.length; n++) {
-        element = cellElements[n];
-        if (element.classList.contains("subject")) {
-            elementAsString = element.innerHTML.replace(":", "");
-        }
-        else if (element.classList.contains("homework")) {
-            elementAsString = element.innerHTML.replace("Дз: ", "");
-        }
-        cellAsString += elementAsString;
-    };
-    return cellAsString;
-}
-
 function checkAuthorization() {
     VK.Auth.getLoginStatus(function (response) {
         var status = response.status;
@@ -313,9 +118,7 @@ function doctypeForDevelopers() {
             show();
             console.log("You are using doctype for developers");
 
-            document.getElementById("CheckboxInputDoneHomework").style.display = "inline";
             document.getElementById("CheckboxHomeworkNotifications").style.display = "inline";
-
             document.getElementById("ShowHomeworkNotifications").onchange = function () {
                 var checked = this.checked;
                 if (checked === true) {
@@ -327,19 +130,6 @@ function doctypeForDevelopers() {
                     setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
                 }
             }
-
-            document.getElementById("ShowDoneHomework").onchange = function () {
-                var checked = this.checked;
-                if (checked === true) {
-                    ChangeDisplayStatusOfDoneHomework("add");
-                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "on");
-                }
-                else {
-                    ChangeDisplayStatusOfDoneHomework("remove");
-                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "off");
-                }
-            }
-            setStatusOfCheckboxOfDoneHomework();
             setStatusOfCheckboxOfHomeworkNotifications();
             return;
         }

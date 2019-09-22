@@ -7,7 +7,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Homework</title>
+    <title>Дневник</title>
+    <meta charset="utf-8" />
     <link rel="stylesheet" href="~/css/Styles.css" />
     <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
     <script src="https://vk.com/js/api/openapi.js?160" type="text/javascript"></script>
@@ -27,10 +28,6 @@
         <style>
             #infoVkAuthorization {
                 display: none;
-            }
-
-            footer {
-                text-align: center;
             }
         </style>
         <div class="announcement">
@@ -134,13 +131,7 @@
                     {
                         readedFile = reader.ReadToEnd();
                     }
-
-                    var tableUpdatedTime = System.IO.File.GetLastWriteTime(lastFile.FullName);
-                    @Html.Raw("<caption>");
-                    <p>Обновлено @tableUpdatedTime.ToString("d.MM H:mm")</p>
-                    @Html.Raw("</caption>");
                     // Начинаем парсить json
-                    //
 
                     var json = JObject.Parse(readedFile);
                     var items = json["data"]["items"].AsEnumerable();
@@ -227,25 +218,25 @@
                                             {
                                                 if (status == "new" && item2["tasks"].Any())
                                                 {
-                                                    <span class="dzAdded" data-tooltip="Домашка появилась">П @updateTime</span>
+                                                    <span class="dzAdded">П @updateTime</span>
                                                 }
                                                 else if (homeworkStatus == "changed")
                                                 {
 
                                                     if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzChanged" data-tooltip="Домашка изменилась">И @updateTime</span>
+                                                        <span class="dzChanged">И @updateTime</span>
                                                     }
                                                     else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzAdded" data-tooltip="Домашка появилась(предмет раньше был)">П(прб) @updateTime</span>
+                                                        <span class="dzAdded">П(прб) @updateTime</span>
                                                     }
                                                     else if (item1.Any() && !item2["tasks"].Any() && item1["tasks"].Any())
                                                     {
                                                         /* Вверху дз, скорее всего, не будет.
                                                          * Лишняя строка. Поэтому стоит class "br"
                                                          * А если будет, то будут и другие события вместе с этим.*/
-                                                        <span class="dzDeleted" data-tooltip="Домашка удалена">У @updateTime</span>
+                                                        <span class="dzDeleted">У @updateTime</span>
                                                         foreach (var task in item1["tasks"])
                                                         {
                                                             <br />
@@ -284,7 +275,7 @@
                                         var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
                                         var tasks = item1["tasks"];
                                         <p class="dzDeleted">
-                                            <span data-tooltip="Домашка удалена">У @updateTime</span>
+                                            <span>У @updateTime</span>
                                             <br />
                                             <span>@subject:</span>
                                             <br />
@@ -319,41 +310,43 @@
             }
             else if (isFiles && tableCount == 0)
             {
-                var updateTimeList = new List<DateTime>();
-                foreach (var curWeekdirectory in currentWeekDirectories)
-                {
-                    var currentDirectoryUpdateTime = System.IO.Directory.GetLastWriteTime(curWeekdirectory);
-                    updateTimeList.Add(currentDirectoryUpdateTime);
-                }
-                var minTime = updateTimeList.Min().ToString("d.MM H:mm");
-                <p class="announcement">Электронный дневник пустой на @minTime</p>
+                <p class="announcement">Электронный дневник пустой!</p>
             }
         }
     </div>
     <footer>
+        <p>
+            @{
+                string maxTime = "неизвестно";
+                var updateTimeList = new List<DateTime>();
+                foreach (var curWeekdirectory in currentWeekDirectories)
+                {
+                    var currentDirectoryFile = new DirectoryInfo(curWeekdirectory).GetFiles().Where(fi => fi.Name == "0.json").FirstOrDefault();
+                    if(currentDirectoryFile != null)
+                    {
+                    updateTimeList.Add(currentDirectoryFile.LastWriteTime);
+                    }
+                }
+                if (updateTimeList.Any())
+                {
+                    maxTime = updateTimeList.Max().ToString("d.MM H:mm");
+                }
+            }
+            Обновлено: @maxTime
+        </p>
         <form id="form">
             <input type="checkbox" id="ShowLessonContent" />Темы уроков
             <br />
             <span id="CheckboxHomeworkNotifications">
                 <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
-                <br />
             </span>
             <!--<input type="checkbox" id="ShowHomeworkNotifications" />События домашки-->
-            <!--<br />-->
-            <!--<input type="checkbox" id="ShowDoneHomework" />Готовые дз-->
-            <span id="CheckboxInputDoneHomework">
-                <input type="checkbox" id="ShowDoneHomework" />Готовые дз
-            </span>
         </form>
 
         <span class="ltd">
+            П - дз появилось; И - дз изменилось; У - дз удалено.
+            <br />
             Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.
-            <br />
-            Чтобы посмотреть расшифровку событий домашек:
-            <br />
-            На компе: подвести мышь к событию.
-            <br />
-            На смартфоне: Нажать на событие и удерживать. Клик куда-либо подсказку убирает.
             <br />
             Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
             <br />

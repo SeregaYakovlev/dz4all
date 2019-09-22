@@ -1,0 +1,150 @@
+function setStatusOfCheckboxOfDoneHomework() {
+    var checkbox = document.getElementById("ShowDoneHomework");
+    var checkboxValue = getInfoFromLocalStorage("DisplayStatusOfDoneHomework");
+    if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
+        ChangeDisplayStatusOfDoneHomework("add");
+        checkbox.checked = true;
+    }
+    else {
+        ChangeDisplayStatusOfDoneHomework("remove");
+        checkbox.checked = false;
+    }
+}
+function ChangeDisplayStatusOfDoneHomework(param) {
+    var elementsDoneHomework = document.getElementsByClassName("DoneHomework");
+
+    if (param === "remove") {
+        for (var i = 0; i < elementsDoneHomework.length; i++) {
+            elementsDoneHomework[i].classList.remove("DoneHomework");
+            i--;
+        }
+        setOrRemoveClickEventListenerOfDoneHomework("remove");
+    }
+    else if (param === "add") {
+        showDoneHomework();
+        setOrRemoveClickEventListenerOfDoneHomework("set");
+    }
+
+    function showDoneHomework() {
+        var table = document.getElementsByTagName("table");
+        var row;
+        var cell;
+        var cellAsString;
+        var storageArray = getInfoFromLocalStorage("DoneHomework");
+        if (storageArray != null) {
+            var ArrayExtraElements = []; // массив лишних элементов
+            ArrayExtraElements = storageArray.slice(0); // просто копируется storageArray
+            for (var i = 0; i < table.length; i++) {
+                for (var k = 1; k < table[i].rows.length; k++) {
+                    row = table[i].rows[k];
+                    for (var j = 0; j < row.cells.length; j++) {
+                        cell = row.cells[j];
+                        cellAsString = CalculateCellAsString(cell, ".subject, .homework");
+                        for (var storageIndex = 0; storageIndex < storageArray.length; storageIndex++) {
+                            if (storageArray[storageIndex] === cellAsString) {
+                                cell.classList.add("DoneHomework");
+                                /* Здесь удаляются элементы, которые понадобились.
+                                 * Берется один элемент массива лишних элементов,
+                                 * и по всем элементам массива localStorage проверяется,
+                                 * равен ли он какому-нибудь из них.
+                                 * Поскольку индексы у массивов для одних и тех же элементов разные,
+                                 * то нужно два цикла, чтобы их найти. */
+                                for (var extraIndex = 0; extraIndex < ArrayExtraElements.length; extraIndex++) {
+                                    if (storageArray[storageIndex] === ArrayExtraElements[extraIndex]) {
+                                        ArrayExtraElements.splice(extraIndex, 1);
+                                        // один элемент с индексом [extraIndex];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            /* Это нужно для удаления из хранилища старых элементов от прошлых недель, которых уже нет.
+             * Удаляется по той же схеме, что и выше. */
+            for (var storageInd = 0; storageInd < storageArray.length; storageInd++) {
+                for (var extraInd = 0; extraInd < ArrayExtraElements.length; extraInd++) {
+                    if (storageArray[storageInd] === ArrayExtraElements[extraInd]) {
+                        storageArray.splice(storageInd, 1);
+                        storageInd--; // уменьшается длина storageArray, уменьшается и индекс.
+                    }
+                }
+            }
+            setInfoToLocalStorage("DoneHomework", storageArray);
+        }
+    }
+}
+function setHomeworkAsDoneOrDeleteIfClick(cell) {
+    var cellAsString = CalculateCellAsString(cell, ".subject, .homework");
+    if (!cell.classList.contains("DoneHomework") && cellAsString !== "") {
+        cell.classList.add("DoneHomework");
+        var array = getInfoFromLocalStorage("DoneHomework") || new Array();
+        array.push(cellAsString);
+        setInfoToLocalStorage("DoneHomework", array);
+    }
+    else {
+        cell.classList.remove("DoneHomework");
+        var localStorageArray = getInfoFromLocalStorage("DoneHomework");
+        for (var element = 0; element < localStorageArray.length; element++) {
+            if (localStorageArray[element] !== cellAsString) continue;
+            else {
+                localStorageArray.splice(element, 1);
+                setInfoToLocalStorage("DoneHomework", localStorageArray);
+            }
+        }
+    }
+}
+function setOrRemoveClickEventListenerOfDoneHomework(param) {
+    var table = document.getElementsByTagName("table");
+    var row;
+    var cell;
+    //var isHomework;
+    for (var i = 0; i < table.length; i++) {
+        for (var k = 1; k < table[i].rows.length; k++) {
+            row = table[i].rows[k];
+            for (var j = 0; j < row.cells.length; j++) {
+                cell = row.cells[j];
+                //isHomework = cell.querySelector(".homework");
+                if (!cell.classList.contains("delSubjectCell") /*&& isHomework != null*/) {
+                    if (param === "set") {
+                        cell.onclick = function () {
+                            setHomeworkAsDoneOrDeleteIfClick(this);
+                        }
+                    }
+                    else if (param === "remove") {
+                        cell.onclick = null;
+                    }
+                }
+            }
+        }
+    }
+}
+function CalculateCellAsString(cell, selectors) {
+    var cellElements = cell.querySelectorAll(selectors);
+    var cellAsString = "";
+    var element;
+    var elementAsString;
+    for (var n = 0; n < cellElements.length; n++) {
+        element = cellElements[n];
+        if (element.classList.contains("subject")) {
+            elementAsString = element.innerHTML.replace(":", "");
+        }
+        else if (element.classList.contains("homework")) {
+            elementAsString = element.innerHTML.replace("Дз: ", "");
+        }
+        cellAsString += elementAsString;
+    };
+    return cellAsString;
+}
+
+document.getElementById("ShowDoneHomework").onchange = function () {
+                var checked = this.checked;
+                if (checked === true) {
+                    ChangeDisplayStatusOfDoneHomework("add");
+                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "on");
+                }
+                else {
+                    ChangeDisplayStatusOfDoneHomework("remove");
+                    setInfoToLocalStorage("DisplayStatusOfDoneHomework", "off");
+                }
+            }

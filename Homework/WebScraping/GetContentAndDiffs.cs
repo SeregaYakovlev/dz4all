@@ -68,10 +68,15 @@ namespace WebScraping
             int i = 0;
             if (newWeekEffect.isEffect)
             {
-                for (int j = 0; j < newWeekEffect.numberOfPastWeek; j++)
+                for (int j = 1; j < newWeekEffect.numberOfPastWeek; j++)
                 {
+                    if (j != 1)
+                    {
+                        last = last.AddDays(-7);
+                        next = next.AddDays(-7);
+                    }
                     var newWeekJson = GetDataFromServer(last, next, pathToCookieFile, args).Result;
-                    WriteToFile(Path.Combine(pathToDataDirectory, "0"), newWeekJson);
+                    WriteToFile(Path.Combine(pathToDataDirectory, "0.json"), newWeekJson);
                 }
                 i = Convert.ToInt32(newWeekEffect.numberOfPastWeek);
             }
@@ -208,7 +213,7 @@ namespace WebScraping
                     {
                         var diffFromFileToMonday = diffToFile - diffToMonday;
                         var numberOfPastWeek = Math.Ceiling(diffFromFileToMonday / 7);
-                        if(newWeekEffectObj.numberOfPastWeek != 0 && numberOfPastWeek != newWeekEffectObj.numberOfPastWeek)
+                        if (newWeekEffectObj.numberOfPastWeek != 0 && numberOfPastWeek != newWeekEffectObj.numberOfPastWeek)
                         {
                             throw new Exception($"The program can not be runned because the last write time of files is earlier than 1 week ago. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
                         }
