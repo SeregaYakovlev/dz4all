@@ -44,83 +44,75 @@ namespace WebScraping
 
             // Соединяемся с электронным дневником и получаем JSON
 
-            DateTime next = DateTime.MinValue;
-            DateTime last = DateTime.MinValue;
-
-            DateTime currentNext = DateTime.Now;
-            while (currentNext.DayOfWeek != DayOfWeek.Sunday)
-            {
-                currentNext = currentNext.AddDays(1);
-            }
-            next = currentNext.Date;
-
-            DateTime currentLast = DateTime.Now;
-            while (currentLast.DayOfWeek != DayOfWeek.Monday)
-            {
-                currentLast = currentLast.AddDays(-1);
-            }
-            last = currentLast.Date;
+            var monday_sunday = GetMondaySunday();
+            var mondayDate = monday_sunday.monday.Date;
+            var sundayDate = monday_sunday.sunday.Date;
 
             string k = args[2]; // На сколько недель нужна домашка?
             int count = Convert.ToInt32(k);
 
-            var newWeekEffect = CheckIfNewWeekEffect(pathToDataDirectory);
-            int i = 0;
-            if (newWeekEffect.isEffect)
-            {
-                for (int j = 1; j < newWeekEffect.numberOfPastWeek; j++)
-                {
-                    if (j != 1)
-                    {
-                        last = last.AddDays(-7);
-                        next = next.AddDays(-7);
-                    }
-                    var newWeekJson = GetDataFromServer(last, next, pathToCookieFile, args).Result;
-                    WriteToFile(Path.Combine(pathToDataDirectory, "0.json"), newWeekJson);
-                }
-                i = Convert.ToInt32(newWeekEffect.numberOfPastWeek);
-            }
+            var dataFromServerList = new SortedList<string, string>();
+            var dataFromFileSystemList = new SortedList<string, string>();
 
-            for (; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
                 Log.Information(i.ToString());
                 if (i != 0)
                 {
-                    last = last.AddDays(-7);
-                    next = next.AddDays(-7);
+                    mondayDate = mondayDate.AddDays(-7);
+                    sundayDate = sundayDate.AddDays(-7);
                 }
-                string jsonContentAsString = GetDataFromServer(last, next, pathToCookieFile, args).Result;
+
                 string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
                 EnsureDirectoryExists(currentWeekPath);
-
                 var lastFile = new DirectoryInfo(currentWeekPath)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
                                     .Where(file => file.Name == "0.json")
                                     .FirstOrDefault();
 
-                GetDiffsContent(lastFile, currentWeekPath, jsonContentAsString);
+                if(lastFile != null)
+                {
+                    using(var reader = new StreamReader(lastFile.FullName))
+                    {
+                        string json = reader.ReadToEnd();
+                        var p = JObject.Parse(json);
+                        dataFromFileSystemList.Add(p["data"]["Monday"].ToString(), json);
+                    }
+                }
 
+                string jsonContentAsString = GetDataFromServer(mondayDate, sundayDate, pathToCookieFile, args).Result;
+                var pa = JObject.Parse(jsonContentAsString);
+                dataFromServerList.Add(pa["data"]["Monday"].ToString(), jsonContentAsString);
+                
                 string fileName = "0.json";
                 var path = Path.Combine(currentWeekPath, fileName);
                 WriteToFile(path, jsonContentAsString);
                 Log.Information($"Файл создан: {fileName}");
             }
+            int dateNumber = 0;
+            var orderedDates = dataFromFileSystemList.Keys.Concat(dataFromServerList.Keys).Distinct().OrderByDescending(d => d);
+            foreach(var date in orderedDates)
+            {
+                bool fileExists = dataFromFileSystemList.TryGetValue(date, out var fileJson);
+                bool serverContains = dataFromServerList.TryGetValue(date, out var serverJson);
+
+                if(fileExists && serverContains)
+                {
+                    GetDiffsContent(fileJson,Path.Combine(pathToDataDirectory, dateNumber.ToString()), serverJson);
+                }
+                dateNumber++;
+            }
+
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
-
-        private static async void GetDiffsContent(FileInfo lastFile, string currentWeekPath, string jsonContentAsString)
+        private static async void GetDiffsContent(string old, string currentWeekPath, string @new)
         {
-            if (lastFile != null && jsonContentAsString != "")
+            if (old != null && @new != null)
             {
-                string readedFile;
-                using (var reader = new StreamReader(lastFile.FullName))
-                {
-                    readedFile = reader.ReadToEnd();
-                }
-                var oldTree = JsonConvert.DeserializeObject<Rootobject>(readedFile);
-                var newTree = JsonConvert.DeserializeObject<Rootobject>(jsonContentAsString);
+                var oldTree = JsonConvert.DeserializeObject<Rootobject>(old);
+                var newTree = JsonConvert.DeserializeObject<Rootobject>(@new);
                 var result = oldTree.GetDiffs(newTree);
                 // Item1(old) - файлы, Item2(@new) - электронный дневник
 
@@ -186,48 +178,9 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
-        private static NewWeekEffectProperties CheckIfNewWeekEffect(string pathToDataDirectory)
-        {
-            var newWeekEffectObj = new NewWeekEffectProperties();
-            newWeekEffectObj.numberOfPastWeek = 0;
-            newWeekEffectObj.isEffect = false;
-
-            var today = DateTime.Now;
-            var monday = today;
-            while (monday.DayOfWeek != DayOfWeek.Monday)
-            {
-                monday = monday.AddDays(-1).Date;
-            }
-
-            var diffToMonday = (today - monday).TotalDays;
-            var dirs = Directory.GetDirectories(pathToDataDirectory);
-            foreach (var dir in dirs)
-            {
-                var curFiles = new DirectoryInfo(dir).GetFiles();
-                var file = curFiles.Where(file => file.Name == "0.json").SingleOrDefault();
-                if (file != null)
-                {
-                    var fileModifyDate = new FileInfo(file.FullName).LastWriteTime.Date;
-                    var diffToFile = (today - fileModifyDate).TotalDays;
-                    if (diffToFile > diffToMonday)
-                    {
-                        var diffFromFileToMonday = diffToFile - diffToMonday;
-                        var numberOfPastWeek = Math.Ceiling(diffFromFileToMonday / 7);
-                        if (newWeekEffectObj.numberOfPastWeek != 0 && numberOfPastWeek != newWeekEffectObj.numberOfPastWeek)
-                        {
-                            throw new Exception($"The program can not be runned because the last write time of files is earlier than 1 week ago. Delete the '0.json' files from {pathToDataDirectory} and start the program again.");
-                        }
-                        newWeekEffectObj.isEffect = true;
-                        newWeekEffectObj.numberOfPastWeek = numberOfPastWeek;
-                    }
-                }
-            }
-            Log.Information($"Эффект новой недели: {newWeekEffectObj.isEffect}");
-            return newWeekEffectObj;
-        }
         private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile, string[] args)
         {
-            string jsonContentAsString = "";
+            string jsonContentAsString = null;
             string lastStr = last.ToString("dd.MM.yyyy");
             string nextStr = next.ToString("dd.MM.yyyy");
             HttpResponseMessage response;
@@ -249,6 +202,7 @@ namespace WebScraping
                         jsonContentAsString = await response.Content.ReadAsStringAsync();
                     }
                     success = true;
+                    jsonContentAsString = AddJsonTimeSet(jsonContentAsString, last);
                     return jsonContentAsString;
                 }
                 catch (HttpRequestException err) when (err.Message.IndexOf("401") > -1)
@@ -261,7 +215,7 @@ namespace WebScraping
                     cookieContainer.Add(baseAddress, cookie);
                 }
             }
-            return jsonContentAsString; // will returns "";
+            return jsonContentAsString; // will returns null;
         }
         private static void ConfigureLogger()
         {
@@ -285,11 +239,53 @@ namespace WebScraping
                 Console.WriteLine(); // Перевод курсора на следующую строку(чтобы небыло "100%Успешно")
             }
         }
+        private static MondaySunday GetMondaySunday()
+        {
+            DateTime next = DateTime.MinValue;
+            DateTime last = DateTime.MinValue;
+
+            DateTime currentNext = DateTime.Now;
+            while (currentNext.DayOfWeek != DayOfWeek.Sunday)
+            {
+                currentNext = currentNext.AddDays(1);
+            }
+            next = currentNext;
+
+            DateTime currentLast = DateTime.Now;
+            while (currentLast.DayOfWeek != DayOfWeek.Monday)
+            {
+                currentLast = currentLast.AddDays(-1);
+            }
+            last = currentLast;
+
+            var MondaySundayClass = new MondaySunday();
+            MondaySundayClass.monday = last;
+            MondaySundayClass.sunday = next;
+            return MondaySundayClass;
+        }
+        private static string AddJsonTimeSet(string jsonContentAsStr, DateTime time)
+        {
+            var jobj = JObject.Parse(jsonContentAsStr);
+            time = ConvertToDate(time);
+            jobj["data"][$"{time.DayOfWeek}"] = time;
+            var jsonAsStr = JsonConvert.SerializeObject(jobj);
+            return jsonAsStr;
+        }
+        private static DateTime ConvertToDate(DateTime dateTime)
+        {
+            return dateTime.Date;
+        }
+    }
+    public class MondaySunday
+    {
+        public DateTime monday;
+        public DateTime sunday;
     }
 
-    public class NewWeekEffectProperties
+    public class FileModifyTimeInfo
     {
-        public double numberOfPastWeek;
-        public bool isEffect;
+        public bool isSameWeek = false;
+        public double weeksOfDiff = 0;
     }
+
 }
