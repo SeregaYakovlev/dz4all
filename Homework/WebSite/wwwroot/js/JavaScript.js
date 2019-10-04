@@ -156,7 +156,7 @@ function setInfoToLocalStorage(key, value) {
 
 function SendToServerAboutError(error) {
     var xhr = new XMLHttpRequest();
-    var host = window.location.origin + "/ServicePages/JSErrors";
+    var host = window.location.origin + "/Shared/JSErrors";
     xhr.open("POST", host, true);
     xhr.send(error);
 }

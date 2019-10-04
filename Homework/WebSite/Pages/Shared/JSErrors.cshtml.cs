@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using static ClassLibrary.Pathes;
 
-namespace WebSite.Pages.ServicePages
+namespace WebSite.Pages.Shared
 {
     public class JSErrorsModel : PageModel
     {
