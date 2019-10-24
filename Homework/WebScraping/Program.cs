@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Net;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
-using static ClassLibrary.Pathes;
+using static ClassLibrary.Global;
 using System.Threading.Tasks;
 
 namespace WebScraping
@@ -18,19 +18,18 @@ namespace WebScraping
         private static Cookie cookie;
         private static async System.Threading.Tasks.Task Main(string[] args)
         {
-            string pathToCookieFile = Path.Combine(pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
-            EnsureDirectoryExists(pathToDataDirectory);
-            EnsureDirectoryExists(pathToAuthorizationDataDirectory);
+            string pathToCookieFile = Path.Combine(Pathes.pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
+            EnsureDirectoryExists(Pathes.pathToDataDirectory);
+            EnsureDirectoryExists(Pathes.pathToAuthorizationDataDirectory);
             ConfigureLogger();
             await InstallBrowserAsync();
 
             string cookieFile;
             if (File.Exists(pathToCookieFile))
             {
-                using (var reader = new StreamReader(pathToCookieFile))
-                {
-                    cookieFile = reader.ReadToEnd();
-                }
+                var fileManager = new ClassLibrary.File_Manager();
+                var result = await fileManager.OpenFile(pathToCookieFile, "Read", null);
+                cookieFile = result.fileData;
                 var json = JObject.Parse(cookieFile);
                 var cookieName = json["Name"].ToString();
                 var cookieValue = json["Value"].ToString();
@@ -63,29 +62,28 @@ namespace WebScraping
                     sundayDate = sundayDate.AddDays(-7);
                 }
 
-                string currentWeekPath = Path.Combine(pathToDataDirectory, i.ToString());
+                string currentWeekPath = Path.Combine(Pathes.pathToDataDirectory, i.ToString());
                 EnsureDirectoryExists(currentWeekPath);
                 var lastFile = new DirectoryInfo(currentWeekPath)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
-                                    .Where(file => file.Name == "0.json")
+                                    .Where(file => file.Name == ConfigJson.serverFileName)
                                     .FirstOrDefault();
 
                 if (lastFile != null)
                 {
-                    using (var reader = new StreamReader(lastFile.FullName))
-                    {
-                        string json = reader.ReadToEnd();
-                        var p = JObject.Parse(json);
-                        dataFromFileSystemList.Add(p["data"]["Monday"].ToString(), json);
-                    }
+                    var fileManager = new ClassLibrary.File_Manager();
+                    var result = await fileManager.OpenFile(pathToCookieFile, "Read", null);
+                    var json = result.fileData;
+                    var p = JObject.Parse(json);
+                    dataFromFileSystemList.Add(p["data"]["Monday"].ToString(), json);
                 }
 
                 string jsonContentAsString = GetDataFromServer(mondayDate, sundayDate, pathToCookieFile, args).Result;
                 var pa = JObject.Parse(jsonContentAsString);
                 dataFromServerList.Add(pa["data"]["Monday"].ToString(), jsonContentAsString);
 
-                string fileName = "0.json";
+                string fileName = ConfigJson.serverFileName;
                 var path = Path.Combine(currentWeekPath, fileName);
                 await WriteToFile(path, jsonContentAsString);
                 Log.Information($"Файл создан: {fileName}");
@@ -98,7 +96,7 @@ namespace WebScraping
                 bool serverContains = dataFromServerList.TryGetValue(date, out var serverJson);
                 if (fileExists && serverContains)
                 {
-                    await GetDiffsContent(fileJson, Path.Combine(pathToDataDirectory, dateNumber.ToString()), serverJson);
+                    await GetDiffsContent(fileJson, Path.Combine(Pathes.pathToDataDirectory, dateNumber.ToString()), serverJson);
                 }
                 dateNumber++;
             }
@@ -106,7 +104,7 @@ namespace WebScraping
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
-        
+
         private static async System.Threading.Tasks.Task GetDiffsContent(string old, string currentWeekPath, string @new)
         {
             if (old != null && @new != null)
@@ -116,10 +114,10 @@ namespace WebScraping
                 var result = oldTree.GetDiffs(newTree);
                 // Item1(old) - файлы, Item2(@new) - электронный дневник
 
-                string currentDiffsFileToWrite = Path.Combine(currentWeekPath, "diffs.json");
+                string currentDiffsFileToWrite = Path.Combine(currentWeekPath, ConfigJson.diffsFileName);
                 if (result.Any())
                 {
-                    var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, "diffs.json");
+                    var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, ConfigJson.diffsFileName);
                     if (!currentDiffsFileForReading.Any())
                     {
                         var convertToJson = JsonConvert.SerializeObject(result);
@@ -127,11 +125,10 @@ namespace WebScraping
                     }
                     else
                     {
-                        string readedDiffsFile;
-                        using (var reader = new StreamReader(currentDiffsFileForReading.Single()))
-                        {
-                            readedDiffsFile = await reader.ReadToEndAsync();
-                        }
+                        var fileManager = new ClassLibrary.File_Manager();
+                        var fileDataObj = await fileManager.OpenFile(currentDiffsFileForReading.Single(), "Read", null);
+                        string readedDiffsFile = fileDataObj.fileData;
+
                         var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item old, Item @new)>>(readedDiffsFile);
 
                         var concatedObj = parsedFile.Concat(result);
@@ -145,7 +142,7 @@ namespace WebScraping
                             if ((notEmptyItem) != null)
                             {
                                 dateTime = notEmptyItem.datetime_from;
-                                dateTimeAsDateTime = dateTimeAsDateTime = DateTime.ParseExact(dateTime, "dd.MM.yyyy HH:mm:ss", null);
+                                dateTimeAsDateTime = dateTimeAsDateTime = DateTime.ParseExact(dateTime, DateTimesFormats.FullDateTime, null);
                                 dateTimeList.Add(dateTimeAsDateTime);
                             }
                         }
@@ -153,7 +150,7 @@ namespace WebScraping
 
                         var recentItemsOnly = concatedObj.Where(changedHomework =>
                         {
-                            var timeAsDateTime = DateTime.ParseExact((changedHomework.old ?? changedHomework.@new).datetime_from, "dd.MM.yyyy HH:mm:ss", null);
+                            var timeAsDateTime = DateTime.ParseExact((changedHomework.old ?? changedHomework.@new).datetime_from, DateTimesFormats.FullDateTime, null);
                             return timeAsDateTime >= maxDateTimeSaved;
                         });
 
@@ -169,7 +166,8 @@ namespace WebScraping
         }
         private static async System.Threading.Tasks.Task WriteToFile(string path, string content)
         {
-            await File.WriteAllTextAsync(path, content);
+            var fileManager = new ClassLibrary.File_Manager();
+            await fileManager.OpenFile(path, "Write", content);
         }
         private static void EnsureDirectoryExists(string directory)
         {

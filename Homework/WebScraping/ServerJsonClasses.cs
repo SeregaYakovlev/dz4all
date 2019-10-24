@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using static ClassLibrary.Global;
 
 namespace WebScraping
 {
@@ -23,7 +24,7 @@ namespace WebScraping
             var join = items.FullOuterJoin(data.items, old => (old.subject_name, old.datetime_from), @new => (@new.subject_name, @new.datetime_from), (old, @new, key) => (old, @new));
             foreach (var joinEntry in join)
             {
-                string dateTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+                string dateTime = DateTime.Now.ToString(DateTimesFormats.FullDateTime);
                 bool oldEmpty = (joinEntry.old == null);
                 bool newEmpty = (joinEntry.@new == null);
 

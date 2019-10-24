@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using static ClassLibrary.Pathes;
+using static ClassLibrary.Global;
 
 namespace WebSite.Pages
 {
@@ -12,41 +12,28 @@ namespace WebSite.Pages
         {
 
         }
-        public void OnPost()
+        public async void OnPost()
         {
             var body = Request.Body;
-            using(var reader = new StreamReader(body))
+            using (var reader = new StreamReader(body))
             {
-                var bodyStr = reader.ReadToEnd();
+                var bodyStr = await reader.ReadToEndAsync();
                 UserWriter(bodyStr);
             }
         }
-        private static void UserWriter(string bodyStr)
+        private static async void UserWriter(string bodyStr)
         {
-            if(!Directory.Exists(pathToReports))
+            if (!Directory.Exists(Pathes.pathToReports))
             {
-                Directory.CreateDirectory(pathToReports);
+                Directory.CreateDirectory(Pathes.pathToReports);
             }
 
-            var currentTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+            var currentTime = DateTime.Now.ToString(DateTimesFormats.FullDateTime);
             string fileName = $"Visits.txt";
-            var path = Path.Combine(pathToReports, fileName);
-            var file = new FileInfo(path);
-
-            bool success = false;
-            while (!success)
-            {
-                try
-                {
-                    System.IO.File.AppendAllText(file.FullName, currentTime + " "
-                        + bodyStr + Environment.NewLine + Environment.NewLine);
-                    success = true;
-                }
-                catch (IOException)
-                {
-                    Task.Delay(1000);
-                }
-            }
+            var path = Path.Combine(Pathes.pathToReports, fileName);
+            var content = $"{currentTime}{bodyStr}{Environment.NewLine + Environment.NewLine}";
+            var fileManager = new ClassLibrary.File_Manager();
+            await fileManager.OpenFile(path, "Append", content);
         }
     }
 }

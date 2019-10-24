@@ -77,14 +77,14 @@
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @using System.Linq;
-        @using static ClassLibrary.Pathes;
+        @using static ClassLibrary.Global;
         @{
-            if (!Directory.Exists(pathToDataDirectory))
+            if (!Directory.Exists(Pathes.pathToDataDirectory))
             {
-                Directory.CreateDirectory(pathToDataDirectory);
+                Directory.CreateDirectory(Pathes.pathToDataDirectory);
             }
 
-            var currentWeekDirectories = Directory.GetDirectories(pathToDataDirectory);
+            var currentWeekDirectories = Directory.GetDirectories(Pathes.pathToDataDirectory);
 
             bool isFiles = false;
             int tableCount = 0;
@@ -93,15 +93,13 @@
                 var lastFile = new DirectoryInfo(currentWeekDir)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
-                                    .Where(file =>
+                                    .Where((file) =>
                                     {
-                                        if (file.Name == "diffs.json") return false;
+                                        if (file.Name == ConfigJson.diffsFileName) return false;
                                         if (!isFiles) isFiles = true;
-                                        string readedFile;
-                                        using (var reader = new StreamReader(file.FullName))
-                                        {
-                                            readedFile = reader.ReadToEnd();
-                                        }
+                                        var fileManager = new ClassLibrary.File_Manager();
+                                        var result = fileManager.OpenFile(file.FullName, "Read", null);
+                                        var readedFile = result.Result.fileData;
                                         var json = JObject.Parse(readedFile);
                                         var items = json["data"]["items"];
                                         if (items.Any()) return true;
@@ -111,26 +109,22 @@
 
                 if (lastFile != null)
                 {
-                    var pathToDiffsFile = Directory.GetFiles(currentWeekDir, "diffs.json");
+                    var pathToDiffsFile = Directory.GetFiles(currentWeekDir, ConfigJson.diffsFileName);
                     JArray diffsJson = null;
                     if (pathToDiffsFile.Any())
                     {
-                        string readedDiffsFile;
-                        using (var reader = new StreamReader(pathToDiffsFile.Single()))
-                        {
-                            readedDiffsFile = reader.ReadToEnd();
-                        }
+                        var fileManager = new ClassLibrary.File_Manager();
+                        var result = fileManager.OpenFile(pathToDiffsFile.Single(), "Read", null);
+                        var readedDiffsFile = result.Result.fileData;
                         diffsJson = JArray.Parse(readedDiffsFile);
                     }
 
                     //int tdCount = 0;
                     @Html.Raw("<table>");
                     tableCount++;
-                    string readedFile;
-                    using (var reader = new StreamReader(lastFile.FullName))
-                    {
-                        readedFile = reader.ReadToEnd();
-                    }
+                    var fileManager2 = new ClassLibrary.File_Manager();
+                    var result2 = fileManager2.OpenFile(lastFile.FullName, "Read", null);
+                    var readedFile = result2.Result.fileData;
                     // Начинаем парсить json
 
                     var json = JObject.Parse(readedFile);
@@ -143,7 +137,7 @@
                      */
 
                     // Группировка по дням недели
-                    var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).DayOfWeek);
+                    var groupsbyDayOfWeek = items.GroupBy(i => DateTime.ParseExact(i["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).DayOfWeek);
                     /* Упорядоченная группировка по дням недели,
                      * то есть сначала понедельник, затем вторник, среда и т. д. */
                     var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
@@ -153,11 +147,11 @@
 
                     foreach (var weekDayItems in itemsGroupedByWeeksDay)
                     {
-                        var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                        var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
                         @Html.Raw("<th>");
                         <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
                         <br />
-                        <span class="date">@date.ToString("dd.MM")</span>
+                        <span class="date">@date.ToString(DateTimesFormats.No_year)</span>
                         @Html.Raw("</th>");
                     }
                     @Html.Raw("</tr>");
@@ -210,7 +204,7 @@
                                         {
                                             var subjectName = item2["subject_name"].ToString();
                                             var datetime = item2["datetime_from"].ToString();
-                                            var updateTime = DateTime.ParseExact(item2["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
+                                            var updateTime = DateTime.ParseExact(item2["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString("DateTimesFormats.No_seconds");
                                             var status = item2["SubjectStatus"].ToString();
                                             var homeworkStatus = item2["HomeworkStatus"].ToString();
 
@@ -264,15 +258,15 @@
                                 @Html.Raw("<tr>");
                                 foreach (var weekDay in itemsGroupedByWeeksDay)
                                 {
-                                    var weekDate = DateTime.ParseExact(weekDay.First()["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
-                                    var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), "dd.MM.yyyy HH:mm:ss", null).Date;
+                                    var weekDate = DateTime.ParseExact(weekDay.First()["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
+                                    var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
                                     @Html.Raw("<td class='delSubjectCell'>");
                                     if (weekDate == delDate)
                                     {
 
                                         var subject = item1["subject_name"].ToString();
                                         var lesson_content = item1["content_name"].ToString();
-                                        var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), "dd.MM.yyyy HH:mm:ss", null).ToString("d.MM H:mm");
+                                        var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString("DateTimesFormats.No_seconds");
                                         var tasks = item1["tasks"];
                                         <p class="dzDeleted">
                                             <span>У @updateTime</span>
@@ -321,15 +315,15 @@
                 var updateTimeList = new List<DateTime>();
                 foreach (var curWeekdirectory in currentWeekDirectories)
                 {
-                    var currentDirectoryFile = new DirectoryInfo(curWeekdirectory).GetFiles().Where(fi => fi.Name == "0.json").FirstOrDefault();
-                    if(currentDirectoryFile != null)
+                    var currentDirectoryFile = new DirectoryInfo(curWeekdirectory).GetFiles().Where(fi => fi.Name == ConfigJson.serverFileName).FirstOrDefault();
+                    if (currentDirectoryFile != null)
                     {
-                    updateTimeList.Add(currentDirectoryFile.LastWriteTime);
+                        updateTimeList.Add(currentDirectoryFile.LastWriteTime);
                     }
                 }
                 if (updateTimeList.Any())
                 {
-                    maxTime = updateTimeList.Max().ToString("d.MM H:mm");
+                    maxTime = updateTimeList.Max().ToString(DateTimesFormats.No_seconds);
                 }
             }
             Обновлено: @maxTime

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using static ClassLibrary.Global;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -15,7 +16,7 @@ namespace WebSite
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.Console()
-            .WriteTo.Seq(Config.Instance.Seq)
+            .WriteTo.Seq(ConfigJson.Seq)
             .CreateLogger();
 
             try
@@ -42,7 +43,7 @@ namespace WebSite
                     webBuilder.ConfigureKestrel(serverOptions =>
                         {
                             // Set properties and call methods on options
-                            serverOptions.ListenAnyIP(Config.Instance.WebServer.Port);
+                            serverOptions.ListenAnyIP(ConfigJson.WebServer.Port);
                         })
                         .UseStartup<Startup>()
                         .UseSerilog();

@@ -1,0 +1,21 @@
+﻿{
+  "ConfigJson": {
+    "Seq": "http://localhost:5341",
+    "serverFileName": "serverData.json",
+    "diffsFileName": "diffs.json",
+    "DateTimesFormats": {
+      "FullDateTime": "dd.MM.yyyy HH:mm:ss",
+      "No_seconds": "d.MM H:mm",
+      "No_year": "dd.MM"
+    },
+    "Pathes": {
+      "pathToDataDirectory": "C:\\Users\\Serega\\Desktop\\Server\\Content",
+      "pathToAuthorizationDataDirectory": "C:\\Users\\Serega\\Desktop\\Server\\AuthorizationData",
+      "pathToReports": "C:\\Users\\Serega\\Desktop\\Server\\Reports"
+    },
+    "WebServer": {
+      "Port": 5000,
+      "UseWebRoot": ".//WebSite//wwwroot"
+    }
+  }
+}
