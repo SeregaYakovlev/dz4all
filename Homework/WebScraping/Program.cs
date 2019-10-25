@@ -48,12 +48,33 @@ namespace WebScraping
             var sundayDate = monday_sunday.sunday.Date;
 
             string k = args[2]; // На сколько недель нужна домашка?
-            int count = Convert.ToInt32(k);
+            int howManyWeeksToDownload = Convert.ToInt32(k);
 
-            var dataFromServerList = new SortedList<string, string>();
-            var dataFromFileSystemList = new SortedList<string, string>();
+            var dataFromServerList = new SortedList<DateTime, string>();
+            var dataFromFileSystemList = new SortedList<DateTime, string>();
+            var serverDataObj = new JObject();
 
-            for (int i = 0; i < count; i++)
+            var lastFile = new DirectoryInfo(Pathes.pathToDataDirectory)
+                                    .GetFiles()
+                                    .OrderByDescending(fi => fi.CreationTime)
+                                    .Where(file => file.Name == ConfigJson.serverFileName)
+                                    .FirstOrDefault();
+            if (lastFile != null)
+            {
+                var fileManager = new ClassLibrary.File_Manager();
+                var path2 = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.serverFileName);
+                var result = await fileManager.OpenFile(path2, "Read", null);
+                var json = result.fileData;
+                var p = JObject.Parse(json);
+                for (int i = 0; i < p.Count; i++)
+                {
+                    var date = DateTime.ParseExact(p[i.ToString()]["data"]["Monday"].ToString(), "dd.MM.yyyy H:mm:ss", null).Date;
+                    var jsonWeek = JsonConvert.SerializeObject(p[i.ToString()]);
+                    dataFromFileSystemList.Add(date, jsonWeek);
+                }
+            }
+
+            for (int i = 0; i < howManyWeeksToDownload; i++)
             {
                 Log.Information(i.ToString());
                 if (i != 0)
@@ -62,71 +83,55 @@ namespace WebScraping
                     sundayDate = sundayDate.AddDays(-7);
                 }
 
-                string currentWeekPath = Path.Combine(Pathes.pathToDataDirectory, i.ToString());
-                EnsureDirectoryExists(currentWeekPath);
-                var lastFile = new DirectoryInfo(currentWeekPath)
-                                    .GetFiles()
-                                    .OrderByDescending(fi => fi.CreationTime)
-                                    .Where(file => file.Name == ConfigJson.serverFileName)
-                                    .FirstOrDefault();
-
-                if (lastFile != null)
-                {
-                    var fileManager = new ClassLibrary.File_Manager();
-                    var result = await fileManager.OpenFile(pathToCookieFile, "Read", null);
-                    var json = result.fileData;
-                    var p = JObject.Parse(json);
-                    dataFromFileSystemList.Add(p["data"]["Monday"].ToString(), json);
-                }
-
                 string jsonContentAsString = GetDataFromServer(mondayDate, sundayDate, pathToCookieFile, args).Result;
-                var pa = JObject.Parse(jsonContentAsString);
-                dataFromServerList.Add(pa["data"]["Monday"].ToString(), jsonContentAsString);
-
-                string fileName = ConfigJson.serverFileName;
-                var path = Path.Combine(currentWeekPath, fileName);
-                await WriteToFile(path, jsonContentAsString);
-                Log.Information($"Файл создан: {fileName}");
+                var strAsJson = JsonConvert.DeserializeObject<JObject>(jsonContentAsString);
+                var date = DateTime.ParseExact(strAsJson["data"]["Monday"].ToString(), "dd.MM.yyyy H:mm:ss", null).Date;
+                dataFromServerList.Add(date, jsonContentAsString);
+                serverDataObj.Add(new JProperty(i.ToString(), strAsJson));
             }
-            int dateNumber = 0;
+            var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.serverFileName);
+            var content = JsonConvert.SerializeObject(serverDataObj);
+            var file_manager = new ClassLibrary.File_Manager();
+            await file_manager.OpenFile(path, "Write", content);
+
             var orderedDates = dataFromFileSystemList.Keys.Concat(dataFromServerList.Keys).Distinct().OrderByDescending(d => d);
+            var howManyWeeksToSaveInDiffsJson = Convert.ToInt32(args[3]);
             foreach (var date in orderedDates)
             {
                 bool fileExists = dataFromFileSystemList.TryGetValue(date, out var fileJson);
                 bool serverContains = dataFromServerList.TryGetValue(date, out var serverJson);
                 if (fileExists && serverContains)
                 {
-                    await GetDiffsContent(fileJson, Path.Combine(Pathes.pathToDataDirectory, dateNumber.ToString()), serverJson);
+                    await GetDiffsContent(fileJson, serverJson, howManyWeeksToSaveInDiffsJson);
                 }
-                dateNumber++;
             }
 
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
 
-        private static async System.Threading.Tasks.Task GetDiffsContent(string old, string currentWeekPath, string @new)
+        private static async System.Threading.Tasks.Task GetDiffsContent(string old, string @new, int howManyWeeksToSave)
         {
             if (old != null && @new != null)
             {
                 var oldTree = JsonConvert.DeserializeObject<Rootobject>(old);
                 var newTree = JsonConvert.DeserializeObject<Rootobject>(@new);
                 var result = oldTree.GetDiffs(newTree);
-                // Item1(old) - файлы, Item2(@new) - электронный дневник
 
-                string currentDiffsFileToWrite = Path.Combine(currentWeekPath, ConfigJson.diffsFileName);
                 if (result.Any())
                 {
-                    var currentDiffsFileForReading = Directory.GetFiles(currentWeekPath, ConfigJson.diffsFileName);
-                    if (!currentDiffsFileForReading.Any())
+                    var file = new DirectoryInfo(Pathes.pathToDataDirectory).GetFiles().Where(fi => fi.Name == ConfigJson.diffsFileName).SingleOrDefault();
+                    if (file == null)
                     {
-                        var convertToJson = JsonConvert.SerializeObject(result);
-                        await WriteToFile(currentDiffsFileToWrite, convertToJson);
+                        var json = JsonConvert.SerializeObject(result);
+                        var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.diffsFileName);
+                        var file_manager = new ClassLibrary.File_Manager();
+                        await file_manager.OpenFile(path, "Append", json);
                     }
                     else
                     {
                         var fileManager = new ClassLibrary.File_Manager();
-                        var fileDataObj = await fileManager.OpenFile(currentDiffsFileForReading.Single(), "Read", null);
+                        var fileDataObj = await fileManager.OpenFile(file.FullName, "Read", null);
                         string readedDiffsFile = fileDataObj.fileData;
 
                         var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item old, Item @new)>>(readedDiffsFile);
@@ -146,7 +151,7 @@ namespace WebScraping
                                 dateTimeList.Add(dateTimeAsDateTime);
                             }
                         }
-                        var maxDateTimeSaved = dateTimeList.Max().AddDays(-7);
+                        var maxDateTimeSaved = dateTimeList.Max().AddDays(howManyWeeksToSave);
 
                         var recentItemsOnly = concatedObj.Where(changedHomework =>
                         {
@@ -158,16 +163,12 @@ namespace WebScraping
 
                         if (newData.Any())
                         {
-                            await WriteToFile(currentDiffsFileToWrite, newData);
+                            var file_manager = new ClassLibrary.File_Manager();
+                            await file_manager.OpenFile(file.FullName, "Append", newData);
                         }
                     }
                 }
             }
-        }
-        private static async System.Threading.Tasks.Task WriteToFile(string path, string content)
-        {
-            var fileManager = new ClassLibrary.File_Manager();
-            await fileManager.OpenFile(path, "Write", content);
         }
         private static void EnsureDirectoryExists(string directory)
         {
