@@ -147,11 +147,11 @@ namespace WebScraping
                             if ((notEmptyItem) != null)
                             {
                                 dateTime = notEmptyItem.datetime_from;
-                                dateTimeAsDateTime = dateTimeAsDateTime = DateTime.ParseExact(dateTime, DateTimesFormats.FullDateTime, null);
+                                dateTimeAsDateTime = DateTime.ParseExact(dateTime, DateTimesFormats.FullDateTime, null);
                                 dateTimeList.Add(dateTimeAsDateTime);
                             }
                         }
-                        var maxDateTimeSaved = dateTimeList.Max().AddDays(howManyWeeksToSave);
+                        var maxDateTimeSaved = dateTimeList.Max().AddDays(-7 * howManyWeeksToSave);
 
                         var recentItemsOnly = concatedObj.Where(changedHomework =>
                         {
@@ -164,7 +164,7 @@ namespace WebScraping
                         if (newData.Any())
                         {
                             var file_manager = new ClassLibrary.File_Manager();
-                            await file_manager.OpenFile(file.FullName, "Append", newData);
+                            await file_manager.OpenFile(file.FullName, "Write", newData);
                         }
                     }
                 }
@@ -280,11 +280,4 @@ namespace WebScraping
         public DateTime monday;
         public DateTime sunday;
     }
-
-    public class FileModifyTimeInfo
-    {
-        public bool isSameWeek = false;
-        public double weeksOfDiff = 0;
-    }
-
 }

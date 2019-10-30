@@ -41,7 +41,7 @@ namespace ClassLibrary
     public class WebServer
     {
         public int Port { get; set; }
-        public string UseWebRoot { get; set; }
+        public string WebRoot { get; set; }
     }
 
     public class DateTimesFormats

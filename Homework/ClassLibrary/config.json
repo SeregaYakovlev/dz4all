@@ -4,7 +4,7 @@
     "serverFileName": "serverData.json",
     "diffsFileName": "diffs.json",
     "DateTimesFormats": {
-      "FullDateTime": "dd.MM.yyyy HH:mm:ss",
+      "FullDateTime": "dd.MM.yyyy H:mm:ss",
       "No_seconds": "d.MM H:mm",
       "No_year": "dd.MM"
     },
@@ -15,7 +15,7 @@
     },
     "WebServer": {
       "Port": 5000,
-      "UseWebRoot": ".//WebSite//wwwroot"
+      "WebRoot": ".//WebSite//wwwroot"
     }
   }
 }

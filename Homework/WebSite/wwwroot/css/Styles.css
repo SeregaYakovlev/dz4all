@@ -46,6 +46,10 @@ form {
     display: none;
 }
 
+.important {
+    color: red;
+}
+
 .ltd {
     color: grey;
     font-size: 11px;

@@ -46,6 +46,7 @@ namespace WebSite
                             serverOptions.ListenAnyIP(ConfigJson.WebServer.Port);
                         })
                         .UseStartup<Startup>()
+                        //.UseWebRoot(ConfigJson.WebServer.WebRoot)
                         .UseSerilog();
                 });
     }

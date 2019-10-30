@@ -117,20 +117,6 @@ function doctypeForDevelopers() {
         if (window.location.origin === doctypeLinks[i]) {
             show();
             console.log("You are using doctype for developers");
-
-            document.getElementById("CheckboxHomeworkNotifications").style.display = "inline";
-            document.getElementById("ShowHomeworkNotifications").onchange = function () {
-                var checked = this.checked;
-                if (checked === true) {
-                    ChangeDisplayStatusOfHomeworkNotifications("inline", "");
-                    setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "on");
-                }
-                else {
-                    ChangeDisplayStatusOfHomeworkNotifications("none", "none");
-                    setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
-                }
-            }
-            setStatusOfCheckboxOfHomeworkNotifications();
             return;
         }
     }

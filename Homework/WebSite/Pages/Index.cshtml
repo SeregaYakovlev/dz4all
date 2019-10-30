@@ -84,51 +84,58 @@
                 Directory.CreateDirectory(Pathes.pathToDataDirectory);
             }
 
-            var currentWeekDirectories = Directory.GetDirectories(Pathes.pathToDataDirectory);
+            var directoryFiles = new DirectoryInfo(Pathes.pathToDataDirectory).GetFiles();
+            var serverFile = directoryFiles
+                .Where(file => file.Name == ConfigJson.serverFileName)
+                .FirstOrDefault();
 
-            bool isFiles = false;
-            int tableCount = 0;
-            foreach (var currentWeekDir in currentWeekDirectories)
+            var diffsFile = directoryFiles
+                .Where(file => file.Name == ConfigJson.diffsFileName)
+                .FirstOrDefault();
+
+            var diffsList = await Methods.ParseDiffsFile(diffsFile);
+
+            bool FileIs = false;
+            int count = 0;
+
+            if (serverFile != null)
             {
-                var lastFile = new DirectoryInfo(currentWeekDir)
-                                    .GetFiles()
-                                    .OrderByDescending(fi => fi.CreationTime)
-                                    .Where((file) =>
-                                    {
-                                        if (file.Name == ConfigJson.diffsFileName) return false;
-                                        if (!isFiles) isFiles = true;
-                                        var fileManager = new ClassLibrary.File_Manager();
-                                        var result = fileManager.OpenFile(file.FullName, "Read", null);
-                                        var readedFile = result.Result.fileData;
-                                        var json = JObject.Parse(readedFile);
-                                        var items = json["data"]["items"];
-                                        if (items.Any()) return true;
-                                        else return false;
-                                    })
-                                    .FirstOrDefault();
-
-                if (lastFile != null)
+                FileIs = true;
+                var fileManager = new ClassLibrary.File_Manager();
+                var result = fileManager.OpenFile(serverFile.FullName, "Read", null);
+                var readedFile = result.Result.fileData;
+                var json = JObject.Parse(readedFile);
+                // Начинаем парсить json
+                for (int i = 0; i < json.Count; i++)
                 {
-                    var pathToDiffsFile = Directory.GetFiles(currentWeekDir, ConfigJson.diffsFileName);
-                    JArray diffsJson = null;
-                    if (pathToDiffsFile.Any())
-                    {
-                        var fileManager = new ClassLibrary.File_Manager();
-                        var result = fileManager.OpenFile(pathToDiffsFile.Single(), "Read", null);
-                        var readedDiffsFile = result.Result.fileData;
-                        diffsJson = JArray.Parse(readedDiffsFile);
-                    }
-
-                    //int tdCount = 0;
+                    var items = json[i.ToString()]["data"]["items"].AsEnumerable();
+                    if (!items.Any()) continue;
                     @Html.Raw("<table>");
-                    tableCount++;
-                    var fileManager2 = new ClassLibrary.File_Manager();
-                    var result2 = fileManager2.OpenFile(lastFile.FullName, "Read", null);
-                    var readedFile = result2.Result.fileData;
-                    // Начинаем парсить json
 
-                    var json = JObject.Parse(readedFile);
-                    var items = json["data"]["items"].AsEnumerable();
+                    /* Если учитель удалил домашку вместе с предметом, то сбщ нельзя иначе показать, не создав
+                    автоматически ячейку.*/
+
+                    if (diffsList != null)
+                    {
+                        var monday = json[i.ToString()]["data"]["Monday"].ToString();
+                        foreach (var element in diffsList)
+                        {
+                            var date = element.Key.Date;
+                            var mondayOfElement = date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday).ToString();
+                            //var sundayOfElement = mondayOfElement = date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Sunday).ToString();
+
+                            if (monday == mondayOfElement)
+                            {
+                                var value = element.Value;
+                                foreach (var token in value)
+                                {
+                                    var item1 = token["Item1"];
+                                    item1["subject_name"] = item1["subject_name"] + "(g)";
+                                    items = items.Append(item1);
+                                }
+                            }
+                        }
+                    }
 
                     items = items.OrderByDescending(item => item["tasks"].Any()).ThenBy(item => item["number"]);
                     /* OrderByDescending - сортировка по убыванию, т.е сначала те предметы, где есть домашка,
@@ -153,6 +160,7 @@
                         <br />
                         <span class="date">@date.ToString(DateTimesFormats.No_year)</span>
                         @Html.Raw("</th>");
+                        count++;
                     }
                     @Html.Raw("</tr>");
 
@@ -172,16 +180,13 @@
 
                             var item = weekDayItems.Skip(k).FirstOrDefault();
                             @Html.Raw("<td>"); // Одна ячейка на один урок
-                              //Console.Write(item);
+
                             if (item != null)
                             {
-                                /* При изменений символов ':', 'Дз: ' не забыть поменять их в
-                                 * функции CalculateCellAsString in JavaScript.js.*/
-
-                                var subject = item["subject_name"].ToString();
-                                var lesson_content = item["content_name"].ToString();
+                                var subject = "" + item["subject_name"];
+                                var lesson_content = "" + item["content_name"];
                                 var tasks = item["tasks"];
-                                var datetimeFrom = item["datetime_from"].ToString();
+                                var datetimeFrom = "" + item["datetime_from"];
                                 // Пишем домашку у уроков.
                                 // foreach нужен, вдруг будет несколько дз!!! у одного и того же предмета
                                 <span class="subject">@subject:</span>
@@ -190,52 +195,79 @@
                                 <br class="br" />
                                 foreach (var task in tasks)
                                 {
-                                    var homework = task["task_name"].ToString();
+                                    var homework = "" + task["task_name"];
+
+                                    /* Важно не показывать удаленную домашку.
+                                     * Когда удаленная ячейка вставляется в items,
+                                     * то домашка отображается как будто это обычный предмет.
+                                     * А признаком удаленной ячейки является наличие свойтсва
+                                     * SubjectStatus. */
+         
+                                    if (item["SubjectStatus"] == null)
+                                    {
                                     <span class="homework">Дз: @homework</span>
                                     <br />
-                                }
-                                if (diffsJson != null)
-                                {
-                                    foreach (var jsonObjects in diffsJson)
+                                    }
+                                    var files = task["files"];
+                                    if (files != null && files.Any())
                                     {
-                                        var item2 = jsonObjects["Item2"];
-                                        var item1 = jsonObjects["Item1"];
-                                        if (item2.Any())
+                                        <p class="important">
+                                            Учитель прикрепил файлы. См. в офиц. эл. дневнике!
+                                        </p>
+                                        <br />
+                                    }
+                                }
+                                if (diffsList != null)
+                                {
+                                    var dateTime = DateTime.ParseExact(datetimeFrom, DateTimesFormats.FullDateTime, null);
+                                    bool contains = diffsList.TryGetValue(dateTime, out var obj);
+                                    if (contains)
+                                    {
+                                        foreach (var token in obj)
                                         {
-                                            var subjectName = item2["subject_name"].ToString();
-                                            var datetime = item2["datetime_from"].ToString();
-                                            var updateTime = DateTime.ParseExact(item2["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString("DateTimesFormats.No_seconds");
-                                            var status = item2["SubjectStatus"].ToString();
-                                            var homeworkStatus = item2["HomeworkStatus"].ToString();
-
-                                            if (subjectName == subject && datetime == datetimeFrom)
+                                            var item1 = token["Item1"];
+                                            var item2 = token["Item2"];
+                                            if (item1.Any())
                                             {
+                                                var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString(DateTimesFormats.No_seconds);
+                                                var status = item1["SubjectStatus"].ToString();
+
+                                                if (status == "deleted" && item1["tasks"].Any())
+                                                {
+                                                    <span class="dzDeleted">У @updateTime</span>
+                                                    <br />
+                                                }
+                                            }
+
+                                            if (item2.Any())
+                                            {
+                                                var updateTime = DateTime.ParseExact(item2["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString(DateTimesFormats.No_seconds);
+                                                var status = item2["SubjectStatus"].ToString();
+                                                var homeworkStatus = item2["HomeworkStatus"].ToString();
+
                                                 if (status == "new" && item2["tasks"].Any())
                                                 {
                                                     <span class="dzAdded">П @updateTime</span>
+                                                    <br />
                                                 }
+
                                                 else if (homeworkStatus == "changed")
                                                 {
 
                                                     if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
                                                         <span class="dzChanged">И @updateTime</span>
+                                                        <br />
                                                     }
                                                     else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
                                                         <span class="dzAdded">П(прб) @updateTime</span>
+                                                        <br />
                                                     }
                                                     else if (item1.Any() && !item2["tasks"].Any() && item1["tasks"].Any())
                                                     {
-                                                        /* Вверху дз, скорее всего, не будет.
-                                                         * Лишняя строка. Поэтому стоит class "br"
-                                                         * А если будет, то будут и другие события вместе с этим.*/
                                                         <span class="dzDeleted">У @updateTime</span>
-                                                        foreach (var task in item1["tasks"])
-                                                        {
-                                                            <br />
-                                                            <span class="dzDeleted">Дз(удалено): @task["task_name"].ToString()</span>
-                                                        }
+                                                        <br />
                                                     }
                                                 }
                                             }
@@ -248,82 +280,29 @@
                         @Html.Raw("</tr>");
                         k++;
                     }
-                    if (diffsJson != null)
-                    {
-                        foreach (var delObjects in diffsJson)
-                        {
-                            var item1 = delObjects["Item1"];
-                            if (item1.Any() && item1["SubjectStatus"].ToString() == "deleted" && item1["tasks"].Any())
-                            {
-                                @Html.Raw("<tr>");
-                                foreach (var weekDay in itemsGroupedByWeeksDay)
-                                {
-                                    var weekDate = DateTime.ParseExact(weekDay.First()["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
-                                    var delDate = DateTime.ParseExact(item1["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
-                                    @Html.Raw("<td class='delSubjectCell'>");
-                                    if (weekDate == delDate)
-                                    {
-
-                                        var subject = item1["subject_name"].ToString();
-                                        var lesson_content = item1["content_name"].ToString();
-                                        var updateTime = DateTime.ParseExact(item1["updateTime"].ToString(), DateTimesFormats.FullDateTime, null).ToString("DateTimesFormats.No_seconds");
-                                        var tasks = item1["tasks"];
-                                        <p class="dzDeleted">
-                                            <span>У @updateTime</span>
-                                            <br />
-                                            <span>@subject:</span>
-                                            <br />
-                                            <span class="lesson_content" style="all: inherit">@lesson_content</span>
-                                            <br class="br" />
-                                            @foreach (var task in tasks)
-                                            {
-                                                <span class="dzDeleted">Дз: @task["task_name"].ToString()</span>
-                                                <br />
-                                            }
-                                        </p>
-                                    }
-                                    @Html.Raw("</td>");
-                                }
-                                @Html.Raw("</tr>");
-                            }
-                        }
-                    }
-                    @Html.Raw("</table>");
                 }
+                @Html.Raw("</table>");
             }
+        }
 
-            if (!isFiles && tableCount == 0)
-            {
-                <p class="announcement">
-                    <strong>ВНИМАНИЕ!</strong>
-                    <br />
-                    <span>Данные на сервере отсутствуют.</span>
-                    <br />
-                    <span>Не удалось получить данные с электронного дневника.</span>
-                </p>
-            }
-            else if (isFiles && tableCount == 0)
-            {
-                <p class="announcement">Электронный дневник пустой!</p>
-            }
+        @if (FileIs && count == 0)
+        {
+            <p class="announcement">Электронный дневник пустой на время обновления данных!</p>
+        }
+        else if (!FileIs)
+        {
+            <p class="announcement">Не удалось получить данные с электронного дневника.</p>
         }
     </div>
     <footer>
         <p>
             @{
                 string maxTime = "неизвестно";
-                var updateTimeList = new List<DateTime>();
-                foreach (var curWeekdirectory in currentWeekDirectories)
+
+                var file = new DirectoryInfo(Pathes.pathToDataDirectory).GetFiles().Where(fi => fi.Name == ConfigJson.serverFileName).FirstOrDefault();
+                if (file != null)
                 {
-                    var currentDirectoryFile = new DirectoryInfo(curWeekdirectory).GetFiles().Where(fi => fi.Name == ConfigJson.serverFileName).FirstOrDefault();
-                    if (currentDirectoryFile != null)
-                    {
-                        updateTimeList.Add(currentDirectoryFile.LastWriteTime);
-                    }
-                }
-                if (updateTimeList.Any())
-                {
-                    maxTime = updateTimeList.Max().ToString(DateTimesFormats.No_seconds);
+                    maxTime = (file.LastWriteTime).ToString();
                 }
             }
             Обновлено: @maxTime
@@ -344,7 +323,7 @@
             <br />
             Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
             <br />
-            Разработчик: Сергей Яковлев, 2019
+            &copy Сергей Яковлев, 2019
         </span>
     </footer>
 </body>

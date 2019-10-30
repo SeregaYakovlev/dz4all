@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassLibrary
 {
     public static class Global
     {
+        //public static Semaphore sem = new Semaphore(1, 1);
+
         public static ConfigJson ConfigJson = Config.Instance.ConfigJson;
         public static Pathes Pathes = ConfigJson.Pathes;
         public static DateTimesFormats DateTimesFormats = ConfigJson.DateTimesFormats;
