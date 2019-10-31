@@ -38,7 +38,7 @@ namespace WebScraping
             else
             {
                 Log.Information("Файл cookie отсутствует. Авторизация");
-                cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
+                cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile);
             }
 
             // Соединяемся с электронным дневником и получаем JSON
@@ -105,7 +105,6 @@ namespace WebScraping
                     await GetDiffsContent(fileJson, serverJson, howManyWeeksToSaveInDiffsJson);
                 }
             }
-
             Log.Information("Скрипт выполнен успешно!");
             Log.CloseAndFlush(); /*отправляем логи на сервер логов*/
         }
@@ -209,20 +208,12 @@ namespace WebScraping
 
                     connectionCount++;
                     Log.Information("Файл cookie устарел. Авторизация.");
-                    cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile, Log.Logger);
+                    cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile);
                     cookieContainer = new CookieContainer();
                     cookieContainer.Add(baseAddress, cookie);
                 }
             }
             return jsonContentAsString; // will returns null;
-        }
-        private static void ConfigureLogger()
-        {
-            var logConfig = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.Seq("http://localhost:5341");
-            Log.Logger = logConfig.CreateLogger();
         }
         private static async System.Threading.Tasks.Task InstallBrowserAsync()
         {
@@ -273,6 +264,14 @@ namespace WebScraping
         private static DateTime ConvertToDate(DateTime dateTime)
         {
             return dateTime.Date;
+        }
+        private static void ConfigureLogger()
+        {
+            var logConfig = new LoggerConfiguration()
+                   .MinimumLevel.Debug()
+                   .WriteTo.Console()
+                   .WriteTo.Seq(ConfigJson.Seq);
+            Log.Logger = logConfig.CreateLogger();
         }
     }
     public class MondaySunday

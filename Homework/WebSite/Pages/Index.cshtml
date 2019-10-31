@@ -5,13 +5,14 @@
 }
 
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <title>Дневник</title>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="~/css/Styles.css" />
     <link rel="shortcut icon" type="image/ico" href="~/favicon.ico" sizes="16x16">
-    <script src="https://vk.com/js/api/openapi.js?160" type="text/javascript"></script>
+    <script src="https://vk.com/js/api/openapi.js?160"></script>
     <script src="~/js/browser&OS.js"></script>
     <!--Не менять местами эти два скрипта. Второй зависит от первого!-->
     <script src="~/js/JavaScript.js"></script>
@@ -25,38 +26,40 @@
         </h1>
     </header>
     <noscript>
-        <style>
-            #infoVkAuthorization {
-                display: none;
-            }
-        </style>
         <div class="announcement">
             <p>
                 <strong>Внимание!</strong>
-                <br />
-                1) В браузере отключён JavaScript, его нужно включить для работы сайта.
-                <br />
+            </p>
+            <p>
+                1)Попробуйте просто обновить страницу - возможно сбой.
+            </p>
+            <p>
+                2) В браузере отключён JavaScript, его нужно включить для работы сайта.
+            </p>
+            <p>
                 <a href="https://yandex.ru/support/common/browsers-settings/browsers-java-js-settings.html">Как включить JavaScript</a>
-                <br />
-                2) Возможно у вас старый или левый браузер - поставьте современный, либо откройте сайт в другом браузере.
-                <br />
+            </p>
+            <p>
+                3) Возможно у вас старый или левый браузер - поставьте современный, либо откройте сайт в другом браузере.
+            </p>
+            <p>
                 Если современный - обновите до последней версии.
-                <br />
-                3) Попробуйте просто обновить страницу - может какой-то сбой.
-                <br />
+            </p>
+            <p>
                 4) Если ничего не помогло - обращайтесь:
-                <br />
+            </p>
+            <p>
                 <a href="https://vk.com/sergo.yakovlev">Моя страница ВК</a>
             </p>
         </div>
     </noscript>
-    <script type="text/javascript">
+    <script>
         VK.init({
             apiId: 6976164
         });
     </script>
     <div id="vkAuthorizer"></div>
-    <script type="text/javascript">
+    <script>
         window.onload = function () {
             VK.Widgets.Auth('vkAuthorizer', {
                 "onAuth": function () {
@@ -65,19 +68,24 @@
             });
         }
     </script>
-    <p id="infoVkAuthorization">
-        Чтобы просмотреть домашние задания, нужно авторизоваться в контакте.
-        <br />
-        При нажатии кнопки вы будете переадресованы на вконтакт,
-        <br />
-        затем обратно на сайт.
-    </p>
+    <div id="infoVkAuthorization">
+        <p>
+            Чтобы просмотреть домашние задания, нужно авторизоваться в контакте.
+        </p>
+        <p>
+            При нажатии кнопки будет переадресация на ВК,
+        </p>
+        <p>
+            затем обратно на сайт.
+        </p>
+    </div>
     <div id="content">
 
         @using System.IO;
         @using Newtonsoft.Json.Linq;
         @using System.Linq;
         @using static ClassLibrary.Global;
+        @using Serilog;
         @{
             if (!Directory.Exists(Pathes.pathToDataDirectory))
             {
@@ -110,6 +118,7 @@
                 {
                     var items = json[i.ToString()]["data"]["items"].AsEnumerable();
                     if (!items.Any()) continue;
+                    //Log.Information("Открыт тег table");
                     @Html.Raw("<table>");
 
                     /* Если учитель удалил домашку вместе с предметом, то сбщ нельзя иначе показать, не создав
@@ -149,19 +158,21 @@
                      * то есть сначала понедельник, затем вторник, среда и т. д. */
                     var itemsGroupedByWeeksDay = groupsbyDayOfWeek.OrderBy(grp => (int)grp.Key);
                     // Пишем дни недели, в которые есть домашка(иначе этого дня нет в itemsGroupedByWeekDay)
-
+                    //Log.Information("Открыт тег tr");
                     @Html.Raw("<tr>");
 
                     foreach (var weekDayItems in itemsGroupedByWeeksDay)
                     {
                         var date = DateTime.ParseExact(weekDayItems.First()["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null).Date;
+                        //Log.Information("Открыт тег th");
                         @Html.Raw("<th>");
-                        <span class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</span>
-                        <br />
-                        <span class="date">@date.ToString(DateTimesFormats.No_year)</span>
+                        <p class="dayWeek">@DayOfWeekExtention.ToRussianString(weekDayItems.Key)</p>
+                        <p class="date">@date.ToString(DateTimesFormats.No_year)</p>
+                        //Log.Information("Закрыт тег th");
                         @Html.Raw("</th>");
                         count++;
                     }
+                    //Log.Information("Закрыт тег tr");
                     @Html.Raw("</tr>");
 
                     // k - количество пройденных строк
@@ -171,6 +182,7 @@
                     var rowCount = itemsGroupedByWeeksDay.Select(grp => grp.Count()).DefaultIfEmpty().Max();
                     while (rowCount > k)
                     {
+                        //Log.Information("Открыт тег tr");
                         @Html.Raw("<tr>"); // Одна строка на всю неделю
 
                         // Берем уроки в определенный день из уроков, сгруппированных по дням недели.
@@ -179,6 +191,7 @@
                         {
 
                             var item = weekDayItems.Skip(k).FirstOrDefault();
+                            //Log.Information("Открыт тег td");
                             @Html.Raw("<td>"); // Одна ячейка на один урок
 
                             if (item != null)
@@ -189,10 +202,8 @@
                                 var datetimeFrom = "" + item["datetime_from"];
                                 // Пишем домашку у уроков.
                                 // foreach нужен, вдруг будет несколько дз!!! у одного и того же предмета
-                                <span class="subject">@subject:</span>
-                                <br />
-                                <span class="lesson_content">@lesson_content</span>
-                                <br class="br" />
+                                <p class="subject">@subject:</p>
+                                <p class="lesson_content">@lesson_content</p>
                                 foreach (var task in tasks)
                                 {
                                     var homework = "" + task["task_name"];
@@ -202,11 +213,10 @@
                                      * то домашка отображается как будто это обычный предмет.
                                      * А признаком удаленной ячейки является наличие свойтсва
                                      * SubjectStatus. */
-         
+
                                     if (item["SubjectStatus"] == null)
                                     {
-                                    <span class="homework">Дз: @homework</span>
-                                    <br />
+                                        <p class="homework">Дз: @homework</p>
                                     }
                                     var files = task["files"];
                                     if (files != null && files.Any())
@@ -214,7 +224,6 @@
                                         <p class="important">
                                             Учитель прикрепил файлы. См. в офиц. эл. дневнике!
                                         </p>
-                                        <br />
                                     }
                                 }
                                 if (diffsList != null)
@@ -234,8 +243,7 @@
 
                                                 if (status == "deleted" && item1["tasks"].Any())
                                                 {
-                                                    <span class="dzDeleted">У @updateTime</span>
-                                                    <br />
+                                                    <p class="dzDeleted">У @updateTime</p>
                                                 }
                                             }
 
@@ -247,8 +255,7 @@
 
                                                 if (status == "new" && item2["tasks"].Any())
                                                 {
-                                                    <span class="dzAdded">П @updateTime</span>
-                                                    <br />
+                                                    <p class="dzAdded">П @updateTime</p>
                                                 }
 
                                                 else if (homeworkStatus == "changed")
@@ -256,18 +263,15 @@
 
                                                     if (item1.Any() && item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzChanged">И @updateTime</span>
-                                                        <br />
+                                                        <p class="dzChanged">И @updateTime</p>
                                                     }
                                                     else if (item1.Any() && !item1["tasks"].Any() && item2["tasks"].Any())
                                                     {
-                                                        <span class="dzAdded">П(прб) @updateTime</span>
-                                                        <br />
+                                                        <p class="dzAdded">П(прб) @updateTime</p>
                                                     }
                                                     else if (item1.Any() && !item2["tasks"].Any() && item1["tasks"].Any())
                                                     {
-                                                        <span class="dzDeleted">У @updateTime</span>
-                                                        <br />
+                                                        <p class="dzDeleted">У @updateTime</p>
                                                     }
                                                 }
                                             }
@@ -275,13 +279,16 @@
                                     }
                                 }
                             }
+                            //Log.Information("Закрыт тег td");
                             @Html.Raw("</td>");
                         }
+                        //Log.Information("Закрыт тег tr");
                         @Html.Raw("</tr>");
                         k++;
                     }
+                    //Log.Information("Закрыт тег table");
+                    @Html.Raw("</table>");
                 }
-                @Html.Raw("</table>");
             }
         }
 
@@ -309,22 +316,20 @@
         </p>
         <form id="form">
             <input type="checkbox" id="ShowLessonContent" />Темы уроков
-            <br />
-            <span id="CheckboxHomeworkNotifications">
-                <input type="checkbox" id="ShowHomeworkNotifications" />События домашки
-            </span>
-            <!--<input type="checkbox" id="ShowHomeworkNotifications" />События домашки-->
         </form>
 
-        <span class="ltd">
-            П - дз появилось; И - дз изменилось; У - дз удалено.
-            <br />
-            Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.
-            <br />
-            Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
-            <br />
-            &copy Сергей Яковлев, 2019
-        </span>
+        <div class="ltd">
+            <p>
+                П - дз появилось; И - дз изменилось; У - дз удалено.
+            </p>
+            <p>
+                Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.
+            </p>
+            <p>
+                Сервис предоставляется "как есть", без каких-либо гарантий и обязательств.
+            </p>
+            &copy; Сергей Яковлев, 2019
+        </div>
     </footer>
 </body>
 </html>

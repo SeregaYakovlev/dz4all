@@ -17,25 +17,22 @@ td, th {
     vertical-align: top;
 }
 
-caption {
-    margin-bottom: -15px;
-    text-align: left;
-    margin-left: 8px;
-}
-
-footer {
-    margin-top: -20px;
-}
-
 form {
     font-size: 20px;
+}
+
+p{
+    margin: 0px;
+}
+
+#infoVkAuthorization {
+    display: none;
 }
 
 #siteInfo {
     color: blue;
     text-align: center;
     margin-top: 0px;
-    margin-bottom: -10px;
 }
 
 #content {
@@ -90,8 +87,6 @@ form {
     font-family: Roboto-bold,sans-serif;
 }
 .lesson_content {
-    /*Класс не применяется для темы урока с классом dzDeleted.
-    Там стоит All: inherit;*/
     font-family: Roboto,sans-serif;
     color: #7d7e86;
     font-size: 14px;

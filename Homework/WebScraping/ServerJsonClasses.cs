@@ -62,7 +62,6 @@ namespace WebScraping
 
     public class Item
     {
-        public int number { get; set; }
         public string datetime_from { get; set; }
         public string subject_name { get; set; }
 

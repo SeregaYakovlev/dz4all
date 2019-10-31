@@ -11,10 +11,12 @@ window.onerror = function (message, url, lineNumber) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("infoVkAuthorization").style.display = "inline";
+
     checkAuthorization();
     setStatusOfCheckboxOfLessonContent();
     //setStatusOfCheckboxOfHomeworkNotifications();
-    doctypeForDevelopers();
+    //doctypeForDevelopers();
     setListenersOfEvents();
 })
 
@@ -30,18 +32,6 @@ function setListenersOfEvents() {
             setInfoToLocalStorage("DisplayStatusOfLessonContent", "off");
         }
     }
-
-    /*document.getElementById("ShowHomeworkNotifications").onchange = function () {
-        var checked = this.checked;
-        if (checked === true) {
-            ChangeDisplayStatusOfHomeworkNotifications("inline", "");
-            setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "on");
-        }
-        else {
-            ChangeDisplayStatusOfHomeworkNotifications("none", "none");
-            setInfoToLocalStorage("DisplayStatusOfHomeworkNotifications", "off");
-        }
-    }*/
 }
 
 function setStatusOfCheckboxOfLessonContent() {
@@ -58,37 +48,9 @@ function setStatusOfCheckboxOfLessonContent() {
 }
 function ChangeDisplayStatusOfLessonContent(param) {
     var lesson_content = document.getElementsByClassName("lesson_content");
-    var br = document.getElementsByClassName("br");
 
     for (var i = 0; i < lesson_content.length; i++) {
         lesson_content[i].style.display = param;
-    }
-    for (var k = 0; k < br.length; k++) {
-        br[k].style.display = param;
-    }
-}
-
-function setStatusOfCheckboxOfHomeworkNotifications() {
-    var checkbox = document.getElementById("ShowHomeworkNotifications");
-    var checkboxValue = getInfoFromLocalStorage("DisplayStatusOfHomeworkNotifications");
-    if (checkboxValue === null || checkboxValue === undefined || checkboxValue === "" || checkboxValue === "on") {
-        ChangeDisplayStatusOfHomeworkNotifications("inline", "");
-        checkbox.checked = true;
-    }
-    else {
-        ChangeDisplayStatusOfHomeworkNotifications("none", "none");
-        checkbox.checked = false;
-    }
-}
-function ChangeDisplayStatusOfHomeworkNotifications(param1, param2) {
-    var homeworkNotifications = document.querySelectorAll(".dzAdded, .dzChanged, .dzDeleted");
-    var delSubjectCells = document.querySelectorAll(".delSubjectCell");
-
-    for (var i = 0; i < homeworkNotifications.length; i++) {
-        homeworkNotifications[i].style.display = param1;
-    }
-    for (var k = 0; k < delSubjectCells.length; k++) {
-        delSubjectCells[k].style.display = param2;
     }
 }
 

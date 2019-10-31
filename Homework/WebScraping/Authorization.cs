@@ -11,7 +11,7 @@ namespace WebScraping
 {
     class Authorization
     {
-        internal static async Task<Cookie> GetCookieByAuthorizationAsync(string[] args, string pathToCookieFile, ILogger logger)
+        internal static async Task<Cookie> GetCookieByAuthorizationAsync(string[] args, string pathToCookieFile)
         {
             /* ОЧЕНЬ ВАЖНО!
              * В DefaultViewPort стоит параметр null, при котором в развернутом виде КОМПЬЮТЕРНАЯ ВЕРСИЯ,
