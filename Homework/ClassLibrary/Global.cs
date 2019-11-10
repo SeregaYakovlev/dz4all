@@ -9,7 +9,7 @@ namespace ClassLibrary
 {
     public static class Global
     {
-        public static Semaphore sem;
+        public static Mutex mutex;
 
         public static ConfigJson ConfigJson = Config.Instance.ConfigJson;
         public static Pathes Pathes = ConfigJson.Pathes;
@@ -17,16 +17,16 @@ namespace ClassLibrary
 
         static Global()
         {
-            sem = new Semaphore(1,1, "semaphore", out bool createdNew);
-            Log.Information($"sema {(createdNew? "created":"existed")}");
+            mutex = new Mutex(false, "mutex", out bool createdNew);
+            Log.Information($"mutex {(createdNew? "created":"existed")}");
         }
     }
 
     public class File_Manager
     {
-        public async Task<FileData> OpenFile(string path, string type, string content)
+        public FileData OpenFile(string path, string type, string content)
         {
-            if(!Global.sem.WaitOne(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 10)))
+            if(!Global.mutex.WaitOne(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 10)))
             {
                 throw new InvalidProgramException("Impossible to aquire semaphore");
             }
@@ -36,14 +36,14 @@ namespace ClassLibrary
 
                 if (type == "Write")
                 {
-                    await File.WriteAllTextAsync(path, content);
+                    File.WriteAllText(path, content);
                 }
                 else if (type == "Read")
                 {
                     string readedFile;
                     using (var reader = new StreamReader(file.FullName))
                     {
-                        readedFile = await reader.ReadToEndAsync();
+                        readedFile = reader.ReadToEnd();
                     }
                     var fileData = new FileData();
                     fileData.fileData = readedFile;
@@ -51,13 +51,13 @@ namespace ClassLibrary
                 }
                 else if (type == "Append")
                 {
-                    await File.AppendAllTextAsync(path, content);
+                    File.AppendAllText(path, content);
                 }
                 return null;
             }
             finally
             {
-                Global.sem.Release();
+                Global.mutex.ReleaseMutex();
             }
         }
     }

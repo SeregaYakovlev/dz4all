@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     checkAuthorization();
     setStatusOfCheckboxOfLessonContent();
     //setStatusOfCheckboxOfHomeworkNotifications();
-    //doctypeForDevelopers();
+    doctypeForDevelopers();
     setListenersOfEvents();
 })
 
@@ -64,17 +64,18 @@ function checkAuthorization() {
             show();
         }
     });
-    function GetUser(id) {
-        VK.api("users.get", { 'user_ids': id, 'v': "5.95" }, function (data) {
-            var name = data.response[0].first_name;
-            var surname = data.response[0].last_name;
-            SendToServerAboutUser(name, surname);
-        });
-    }
+}
+
+function GetUser(id) {
+    VK.api("users.get", { 'user_ids': id, 'v': "5.95" }, function (data) {
+        var name = data.response[0].first_name;
+        var surname = data.response[0].last_name;
+        SendToServerAboutUser(name, surname);
+    });
 }
 
 function doctypeForDevelopers() {
-    var doctypeLinks = ["http://localhost:5000", "http://192.168.2.15:5000"];
+    var doctypeLinks = ["https://localhost", "https://192.168.2.15"];
     for (var i = 0; i < doctypeLinks.length; i++) {
         if (window.location.origin === doctypeLinks[i]) {
             show();

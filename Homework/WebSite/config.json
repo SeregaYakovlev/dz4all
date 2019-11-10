@@ -1,0 +1,32 @@
+﻿{
+  "ConfigJson": {
+	"Login": "+79219305001",
+    "Password": "hereHERE1978!(&",
+    "HowManyWeeksToDownload": 10,
+    "HowManyWeeksToSave": 10,
+    "DefaultTimeout": 300000,
+    "Seq": "http://localhost:5341",
+    "serverFileName": "serverData.json",
+    "diffsFileName": "diffs.json",
+    "DateTimesFormats": {
+      "FullDateTime": "dd.MM.yyyy H:mm:ss",
+      "No_seconds": "d.MM H:mm",
+      "No_year": "dd.MM"
+    },
+    "Pathes": {
+      "pathToDataDirectory": "C:\\Users\\Serega\\Desktop\\ServerWin\\Content",
+      "pathToAuthorizationDataDirectory": "C:\\Users\\Serega\\Desktop\\ServerWin\\AuthorizationData",
+      "pathToReports": "C:\\Users\\Serega\\Desktop\\ServerWin\\Reports"
+    },
+    "WebServer": {
+      "HTTP_Port": 5000,
+      "HTTPS_Port": 443,
+      "WebRoot": ".//WebSite//wwwroot",
+      "HTTPS": {
+        "Certificate": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\fullchain.pem",
+        "PrivateKey": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\privkey.pem",
+        "PathForPfxFile": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\certificate.pfx"
+      }
+    }
+  }
+}

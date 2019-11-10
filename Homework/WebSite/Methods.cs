@@ -35,7 +35,7 @@ namespace WebSite
             {
                 var fileManager = new ClassLibrary.File_Manager();
                 var result = fileManager.OpenFile(diffsFile.FullName, "Read", null);
-                var readedDiffsFile = result.Result.fileData;
+                var readedDiffsFile = result.fileData;
                 var diffsJson = JArray.Parse(readedDiffsFile);
 
                 foreach (var obj in diffsJson)

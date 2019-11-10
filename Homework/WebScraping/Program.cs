@@ -16,7 +16,7 @@ namespace WebScraping
     class Program
     {
         private static Cookie cookie;
-        private static async System.Threading.Tasks.Task Main(string[] args)
+        private static async System.Threading.Tasks.Task Main()
         {
             string pathToCookieFile = Path.Combine(Pathes.pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
             EnsureDirectoryExists(Pathes.pathToDataDirectory);
@@ -28,7 +28,7 @@ namespace WebScraping
             if (File.Exists(pathToCookieFile))
             {
                 var fileManager = new ClassLibrary.File_Manager();
-                var result = await fileManager.OpenFile(pathToCookieFile, "Read", null);
+                var result = fileManager.OpenFile(pathToCookieFile, "Read", null);
                 cookieFile = result.fileData;
                 var json = JObject.Parse(cookieFile);
                 var cookieName = json["Name"].ToString();
@@ -38,7 +38,8 @@ namespace WebScraping
             else
             {
                 Log.Information("Файл cookie отсутствует. Авторизация");
-                cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile);
+                Authorization.DefaultTimeout = ConfigJson.DefaultTimeout;
+                cookie = await Authorization.GetCookieByAuthorizationAsync(pathToCookieFile);
             }
 
             // Соединяемся с электронным дневником и получаем JSON
@@ -47,8 +48,7 @@ namespace WebScraping
             var mondayDate = monday_sunday.monday.Date;
             var sundayDate = monday_sunday.sunday.Date;
 
-            string k = args[2]; // На сколько недель нужна домашка?
-            int howManyWeeksToDownload = Convert.ToInt32(k);
+            int howManyWeeksToDownload = ConfigJson.HowManyWeeksToDownload;
 
             var dataFromServerList = new SortedList<DateTime, string>();
             var dataFromFileSystemList = new SortedList<DateTime, string>();
@@ -63,12 +63,12 @@ namespace WebScraping
             {
                 var fileManager = new ClassLibrary.File_Manager();
                 var path2 = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.serverFileName);
-                var result = await fileManager.OpenFile(path2, "Read", null);
+                var result = fileManager.OpenFile(path2, "Read", null);
                 var json = result.fileData;
                 var p = JObject.Parse(json);
                 for (int i = 0; i < p.Count; i++)
                 {
-                    var date = DateTime.ParseExact(p[i.ToString()]["data"]["Monday"].ToString(), "dd.MM.yyyy H:mm:ss", null).Date;
+                    var date = DateTime.ParseExact(p[i.ToString()]["data"]["Monday"].ToString(), ConfigJson.DateTimesFormats.FullDateTime, null).Date;
                     var jsonWeek = JsonConvert.SerializeObject(p[i.ToString()]);
                     dataFromFileSystemList.Add(date, jsonWeek);
                 }
@@ -83,7 +83,7 @@ namespace WebScraping
                     sundayDate = sundayDate.AddDays(-7);
                 }
 
-                string jsonContentAsString = GetDataFromServer(mondayDate, sundayDate, pathToCookieFile, args).Result;
+                string jsonContentAsString = GetDataFromServer(mondayDate, sundayDate, pathToCookieFile).Result;
                 var strAsJson = JsonConvert.DeserializeObject<JObject>(jsonContentAsString);
                 var date = DateTime.ParseExact(strAsJson["data"]["Monday"].ToString(), "dd.MM.yyyy H:mm:ss", null).Date;
                 dataFromServerList.Add(date, jsonContentAsString);
@@ -92,10 +92,10 @@ namespace WebScraping
             var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.serverFileName);
             var content = JsonConvert.SerializeObject(serverDataObj);
             var file_manager = new ClassLibrary.File_Manager();
-            await file_manager.OpenFile(path, "Write", content);
+            file_manager.OpenFile(path, "Write", content);
 
             var orderedDates = dataFromFileSystemList.Keys.Concat(dataFromServerList.Keys).Distinct().OrderByDescending(d => d);
-            var howManyWeeksToSaveInDiffsJson = Convert.ToInt32(args[3]);
+            var howManyWeeksToSaveInDiffsJson = ConfigJson.HowManyWeeksToSave;
             foreach (var date in orderedDates)
             {
                 bool fileExists = dataFromFileSystemList.TryGetValue(date, out var fileJson);
@@ -125,12 +125,12 @@ namespace WebScraping
                         var json = JsonConvert.SerializeObject(result);
                         var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.diffsFileName);
                         var file_manager = new ClassLibrary.File_Manager();
-                        await file_manager.OpenFile(path, "Append", json);
+                        file_manager.OpenFile(path, "Append", json);
                     }
                     else
                     {
                         var fileManager = new ClassLibrary.File_Manager();
-                        var fileDataObj = await fileManager.OpenFile(file.FullName, "Read", null);
+                        var fileDataObj = fileManager.OpenFile(file.FullName, "Read", null);
                         string readedDiffsFile = fileDataObj.fileData;
 
                         var parsedFile = JsonConvert.DeserializeObject<IEnumerable<(Item old, Item @new)>>(readedDiffsFile);
@@ -163,7 +163,7 @@ namespace WebScraping
                         if (newData.Any())
                         {
                             var file_manager = new ClassLibrary.File_Manager();
-                            await file_manager.OpenFile(file.FullName, "Write", newData);
+                            file_manager.OpenFile(file.FullName, "Write", newData);
                         }
                     }
                 }
@@ -176,7 +176,7 @@ namespace WebScraping
                 Directory.CreateDirectory(directory);
             }
         }
-        private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile, string[] args)
+        private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile)
         {
             string jsonContentAsString = null;
             string lastStr = last.ToString("dd.MM.yyyy");
@@ -208,7 +208,8 @@ namespace WebScraping
 
                     connectionCount++;
                     Log.Information("Файл cookie устарел. Авторизация.");
-                    cookie = await Authorization.GetCookieByAuthorizationAsync(args, pathToCookieFile);
+                    Authorization.DefaultTimeout = ConfigJson.DefaultTimeout;
+                    cookie = await Authorization.GetCookieByAuthorizationAsync(pathToCookieFile);
                     cookieContainer = new CookieContainer();
                     cookieContainer.Add(baseAddress, cookie);
                 }
@@ -256,8 +257,8 @@ namespace WebScraping
         private static string AddJsonTimeSet(string jsonContentAsStr, DateTime time)
         {
             var jobj = JObject.Parse(jsonContentAsStr);
-            time = ConvertToDate(time);
-            jobj["data"][$"{time.DayOfWeek}"] = time;
+            string datetime = ConvertToDate(time).ToString(ConfigJson.DateTimesFormats.FullDateTime);
+            jobj["data"][$"{time.DayOfWeek}"] = datetime;
             var jsonAsStr = JsonConvert.SerializeObject(jobj);
             return jsonAsStr;
         }

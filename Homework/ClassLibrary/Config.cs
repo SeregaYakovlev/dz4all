@@ -9,7 +9,7 @@ namespace ClassLibrary
     public class Config
     {
         public readonly static string SETTINGS_FILE =
-            Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "config.json");
+            Path.Combine(Directory.GetCurrentDirectory(), "config.json");
 
         private static Config instance;
 
@@ -30,6 +30,11 @@ namespace ClassLibrary
 
     public class ConfigJson
     {
+        public string Login { get; set; }
+        public string Password { get; set; }
+        public int HowManyWeeksToDownload { get; set; }
+        public int HowManyWeeksToSave { get; set; }
+        public int DefaultTimeout { get; set; }
         public string Seq { get; set; }
         public string serverFileName { get; set; }
         public string diffsFileName { get; set; }
@@ -40,8 +45,17 @@ namespace ClassLibrary
 
     public class WebServer
     {
-        public int Port { get; set; }
+        public int HTTP_Port { get; set; }
+        public int HTTPS_Port { get; set; }
         public string WebRoot { get; set; }
+        public HTTPS HTTPS { get; set; }
+    }
+
+    public class HTTPS
+    {
+        public string Certificate { get; set; }
+        public string PrivateKey { get; set; }
+        public string PathForPfxFile { get; set; }
     }
 
     public class DateTimesFormats

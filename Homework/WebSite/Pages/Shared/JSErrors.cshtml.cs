@@ -12,7 +12,7 @@ namespace WebSite.Pages.Shared
         {
 
         }
-        public async void OnPost()
+        public async Task OnPost()
         {
             var body = Request.Body;
             using(var reader = new StreamReader(body))
@@ -21,7 +21,7 @@ namespace WebSite.Pages.Shared
                 ErrorWriter(bodyStr);
             }
         }
-        private static async void ErrorWriter(string bodyStr)
+        private static void ErrorWriter(string bodyStr)
         {
             if (!Directory.Exists(Pathes.pathToReports))
             {
@@ -33,7 +33,7 @@ namespace WebSite.Pages.Shared
             var path = Path.Combine(Pathes.pathToReports, fileName);
             var content = $"{currentTime}{Environment.NewLine}{bodyStr}{Environment.NewLine + Environment.NewLine}";
             var fileManager = new ClassLibrary.File_Manager();
-            await fileManager.OpenFile(path, "Append", content);
+            fileManager.OpenFile(path, "Append", content);
         }
     }
 }

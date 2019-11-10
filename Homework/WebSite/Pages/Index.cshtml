@@ -62,7 +62,9 @@
     <script>
         window.onload = function () {
             VK.Widgets.Auth('vkAuthorizer', {
-                "onAuth": function () {
+                "onAuth": function (data) {
+                    var id = data.session.mid;
+                    GetUser(id);
                     show();
                 }
             });
@@ -111,7 +113,7 @@
                 FileIs = true;
                 var fileManager = new ClassLibrary.File_Manager();
                 var result = fileManager.OpenFile(serverFile.FullName, "Read", null);
-                var readedFile = result.Result.fileData;
+                var readedFile = result.fileData;
                 var json = JObject.Parse(readedFile);
                 // Начинаем парсить json
                 for (int i = 0; i < json.Count; i++)
@@ -131,7 +133,6 @@
                         {
                             var date = element.Key.Date;
                             var mondayOfElement = date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday).ToString();
-                            //var sundayOfElement = mondayOfElement = date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Sunday).ToString();
 
                             if (monday == mondayOfElement)
                             {
@@ -309,7 +310,7 @@
                 var file = new DirectoryInfo(Pathes.pathToDataDirectory).GetFiles().Where(fi => fi.Name == ConfigJson.serverFileName).FirstOrDefault();
                 if (file != null)
                 {
-                    maxTime = (file.LastWriteTime).ToString();
+                    maxTime = (file.LastWriteTime).ToString(DateTimesFormats.No_seconds);
                 }
             }
             Обновлено: @maxTime
