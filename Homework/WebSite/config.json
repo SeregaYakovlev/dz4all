@@ -1,6 +1,9 @@
 ﻿{
   "ConfigJson": {
-	"Login": "+79219305001",
+    "Author": "Сергей Яковлев, 2019",
+    "SiteInfo": "Домашние задания 9Б класса",
+    "HowOftenDataUpdates": "Данные обновляются ежедневно с 8:00 до 23:00 каждые 15 минут.",
+    "Login": "+79219305001",
     "Password": "hereHERE1978!(&",
     "HowManyWeeksToDownload": 10,
     "HowManyWeeksToSave": 10,
@@ -8,6 +11,7 @@
     "Seq": "http://localhost:5341",
     "serverFileName": "serverData.json",
     "diffsFileName": "diffs.json",
+    "JavaScriptErrorsFileName": "Errors.txt",
     "DateTimesFormats": {
       "FullDateTime": "dd.MM.yyyy H:mm:ss",
       "No_seconds": "d.MM H:mm",
@@ -21,10 +25,10 @@
     "WebServer": {
       "HTTP_Port": 5000,
       "HTTPS_Port": 443,
-      "WebRoot": ".//WebSite//wwwroot",
+      "WebRoot": "C:\\Users\\Serega\\Desktop\\ServerWin\\WebSite\\wwwroot",
       "HTTPS": {
         "Certificate": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\fullchain.pem",
-        "PrivateKey": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\privkey.pem",
+        "PrivateKey": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\fullchain.pem",
         "PathForPfxFile": "C:\\Users\\Serega\\Desktop\\ServerWin\\letsencrypt\\live\\dz4all.ru\\certificate.pfx"
       }
     }

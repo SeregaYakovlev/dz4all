@@ -23,13 +23,8 @@ namespace WebSite.Pages.Shared
         }
         private static void ErrorWriter(string bodyStr)
         {
-            if (!Directory.Exists(Pathes.pathToReports))
-            {
-                Directory.CreateDirectory(Pathes.pathToReports);
-            }
-
             var currentTime = DateTime.Now.ToString(DateTimesFormats.FullDateTime);
-            string fileName = $"Errors.txt";
+            string fileName = $"{ConfigJson.JavaScriptErrorsFileName}";
             var path = Path.Combine(Pathes.pathToReports, fileName);
             var content = $"{currentTime}{Environment.NewLine}{bodyStr}{Environment.NewLine + Environment.NewLine}";
             var fileManager = new ClassLibrary.File_Manager();

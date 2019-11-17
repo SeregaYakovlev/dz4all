@@ -13,7 +13,7 @@ namespace WebSite
     {
         public static async Task Start(string user)
         {
-            var usersFilePath = Path.Combine(Pathes.pathToReports, "Users.json");
+            var usersFilePath = Path.Combine(Pathes.pathToReports, "UsersCounter.json");
             bool fileExists = File.Exists(usersFilePath);
             if (fileExists) await AnalizeJson(user, usersFilePath);
             else
@@ -55,7 +55,7 @@ namespace WebSite
         {
             var jobj = new JObject();
             jobj["Total"] = 0;
-            var json = JsonConvert.SerializeObject(jobj);
+            var json = JsonConvert.SerializeObject(jobj, Formatting.Indented);
             new ClassLibrary.File_Manager().OpenFile(usersFilePath, "Write", json);
         }
     }

@@ -56,9 +56,9 @@ namespace WebScraping
                         connectCount++;
                     }
                 }
-                
-                
-                WaitForSelectorOptions WaitForSelectorTimeout = new WaitForSelectorOptions{Timeout = DefaultTimeout};
+
+
+                WaitForSelectorOptions WaitForSelectorTimeout = new WaitForSelectorOptions { Timeout = DefaultTimeout };
 
                 Log.Information($"DefaultTimeout: {p.DefaultTimeout}");
                 Log.Information($"DefaultNavigationTimeout: {p.DefaultNavigationTimeout}");
@@ -67,7 +67,7 @@ namespace WebScraping
                 await p.WaitForSelectorAsync(button, WaitForSelectorTimeout);
                 await System.Threading.Tasks.Task.Delay(10000);
                 await p.ClickAsync(button);
-                
+
                 Log.Information("Первый клик {Button}: успешно!", "Войти с ЕСИА");
                 Log.Information($"{timer.ElapsedMilliseconds}");
                 timer.Restart();
@@ -116,7 +116,9 @@ namespace WebScraping
                 await browser.CloseAsync();
 
                 var cookieAsJson = JsonConvert.SerializeObject(cookie);
-                await File.WriteAllTextAsync(pathToCookieFile, cookieAsJson);
+                //await File.WriteAllTextAsync(pathToCookieFile, cookieAsJson);
+                var fm = new ClassLibrary.File_Manager();
+                fm.OpenFile(pathToCookieFile, "Write", cookieAsJson);
                 return cookie;
             }
         }
@@ -168,7 +170,7 @@ namespace WebScraping
                 var cur_type = e.Request.ResourceType;
                 bool isAllowed = true;
                 var disabled_types = PuppeteerSharpLaunchArgs.types;
-                foreach(var d_type in disabled_types)
+                foreach (var d_type in disabled_types)
                 {
                     if (cur_type == d_type) isAllowed = false;
                 }

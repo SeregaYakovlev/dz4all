@@ -27,10 +27,10 @@ namespace WebSite
     }
     public static class Methods
     {
-        public static async Task<SortedList<DateTime, List<JToken>>> ParseDiffsFile(FileInfo diffsFile)
+        public static async Task<SortedList<(DateTime, string), List<JToken>>> ParseDiffsFile(FileInfo diffsFile)
         {
-            var sortedList = new SortedList<DateTime, List<JToken>>();
-            
+            var sortedList = new SortedList<(DateTime, string), List<JToken>>();
+
             if (diffsFile != null)
             {
                 var fileManager = new ClassLibrary.File_Manager();
@@ -40,30 +40,33 @@ namespace WebSite
 
                 foreach (var obj in diffsJson)
                 {
-                    var item1 = obj["Item1"];
-                    var item2 = obj["Item2"];
-                    var items = new List<JToken>();
-                    if (item1.Any()) items.Add(item1);
-                    if (item2.Any()) items.Add(item2);
-                    foreach (var item in items)
+                    var item = GetNotNullItem(obj);
+                    var datetime = DateTime.ParseExact(item["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null);
+                    var subject = item["subject_name"].ToString();
+                    bool keyContains = sortedList.ContainsKey((datetime, subject));
+                    if (!keyContains)
                     {
-                        var datetime = DateTime.ParseExact(item["datetime_from"].ToString(), DateTimesFormats.FullDateTime, null);
-                        bool keyContains = sortedList.ContainsKey(datetime);
-                        if (!keyContains)
-                        {
-                            var list = new List<JToken>();
-                            list.Add(obj);
-                            sortedList.Add(datetime, list);
-                        }
-                        else
-                        {
-                            List<JToken> @object = sortedList[datetime];
-                            @object.Add(obj);
-                        }
+                        var list = new List<JToken>();
+                        list.Add(obj);
+                        sortedList.Add((datetime, subject), list);
+                    }
+                    else
+                    {
+                        List<JToken> @object = sortedList[(datetime, subject)];
+                        @object.Add(obj);
                     }
                 }
             }
             return sortedList;
+        }
+
+        private static JToken GetNotNullItem(JToken obj)
+        {
+            foreach (var item in obj)
+            {
+                if (item.Any(t => t.HasValues)) return item.Single();
+            }
+            throw new InvalidOperationException($"unexpected case. obj.Count={obj.Count()}");
         }
     }
 }

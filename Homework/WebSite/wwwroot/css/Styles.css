@@ -39,10 +39,6 @@ p{
     display: none;
 }
 
-#CheckboxHomeworkNotifications {
-    display: none;
-}
-
 .important {
     color: red;
 }
@@ -86,6 +82,7 @@ p{
     line-height: normal;
     font-family: Roboto-bold,sans-serif;
 }
+
 .lesson_content {
     font-family: Roboto,sans-serif;
     color: #7d7e86;

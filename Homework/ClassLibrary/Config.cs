@@ -30,6 +30,9 @@ namespace ClassLibrary
 
     public class ConfigJson
     {
+        public string Author { get; set; }
+        public string SiteInfo { get; set; }
+        public string HowOftenDataUpdates { get; set; }
         public string Login { get; set; }
         public string Password { get; set; }
         public int HowManyWeeksToDownload { get; set; }
@@ -38,6 +41,7 @@ namespace ClassLibrary
         public string Seq { get; set; }
         public string serverFileName { get; set; }
         public string diffsFileName { get; set; }
+        public string JavaScriptErrorsFileName { get; set; }
         public DateTimesFormats DateTimesFormats { get; set; }
         public Pathes Pathes { get; set; }
         public WebServer WebServer { get; set; }

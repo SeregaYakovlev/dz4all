@@ -19,8 +19,6 @@ namespace WebScraping
         private static async System.Threading.Tasks.Task Main()
         {
             string pathToCookieFile = Path.Combine(Pathes.pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
-            EnsureDirectoryExists(Pathes.pathToDataDirectory);
-            EnsureDirectoryExists(Pathes.pathToAuthorizationDataDirectory);
             ConfigureLogger();
             await InstallBrowserAsync();
 
@@ -54,6 +52,7 @@ namespace WebScraping
             var dataFromFileSystemList = new SortedList<DateTime, string>();
             var serverDataObj = new JObject();
 
+            EnsureDirectoryExists(Pathes.pathToDataDirectory);
             var lastFile = new DirectoryInfo(Pathes.pathToDataDirectory)
                                     .GetFiles()
                                     .OrderByDescending(fi => fi.CreationTime)
@@ -90,7 +89,7 @@ namespace WebScraping
                 serverDataObj.Add(new JProperty(i.ToString(), strAsJson));
             }
             var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.serverFileName);
-            var content = JsonConvert.SerializeObject(serverDataObj);
+            var content = JsonConvert.SerializeObject(serverDataObj, Formatting.Indented);
             var file_manager = new ClassLibrary.File_Manager();
             file_manager.OpenFile(path, "Write", content);
 
@@ -122,7 +121,7 @@ namespace WebScraping
                     var file = new DirectoryInfo(Pathes.pathToDataDirectory).GetFiles().Where(fi => fi.Name == ConfigJson.diffsFileName).SingleOrDefault();
                     if (file == null)
                     {
-                        var json = JsonConvert.SerializeObject(result);
+                        var json = JsonConvert.SerializeObject(result, Formatting.Indented);
                         var path = Path.Combine(Pathes.pathToDataDirectory, ConfigJson.diffsFileName);
                         var file_manager = new ClassLibrary.File_Manager();
                         file_manager.OpenFile(path, "Append", json);
@@ -158,7 +157,7 @@ namespace WebScraping
                             return timeAsDateTime >= maxDateTimeSaved;
                         });
 
-                        var newData = JsonConvert.SerializeObject(recentItemsOnly);
+                        var newData = JsonConvert.SerializeObject(recentItemsOnly, Formatting.Indented);
 
                         if (newData.Any())
                         {
@@ -167,13 +166,6 @@ namespace WebScraping
                         }
                     }
                 }
-            }
-        }
-        private static void EnsureDirectoryExists(string directory)
-        {
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
             }
         }
         private static async Task<string> GetDataFromServer(DateTime last, DateTime next, string pathToCookieFile)

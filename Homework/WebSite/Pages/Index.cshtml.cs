@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Serilog;
 using static ClassLibrary.Global;
 
 namespace WebSite.Pages
@@ -18,13 +19,8 @@ namespace WebSite.Pages
             using (var reader = new StreamReader(body))
             {
                 var bodyStr = await reader.ReadToEndAsync();
-
-                if (!Directory.Exists(Pathes.pathToReports))
-                {
-                    Directory.CreateDirectory(Pathes.pathToReports);
-                }
-
                 await UsersCounter.Start(bodyStr);
+                Log.Information($"User: {bodyStr} {DateTime.Now}");
             }
         }
     }

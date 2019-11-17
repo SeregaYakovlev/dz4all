@@ -15,6 +15,14 @@ namespace ClassLibrary
         public static Pathes Pathes = ConfigJson.Pathes;
         public static DateTimesFormats DateTimesFormats = ConfigJson.DateTimesFormats;
 
+        public static void EnsureDirectoryExists(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+
         static Global()
         {
             mutex = new Mutex(false, "mutex", out bool createdNew);
@@ -28,10 +36,16 @@ namespace ClassLibrary
         {
             if(!Global.mutex.WaitOne(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 10)))
             {
-                throw new InvalidProgramException("Impossible to aquire semaphore");
+                throw new InvalidProgramException("Impossible to aquire mutex");
             }
             try
             {
+                var directory = Path.GetDirectoryName(path);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
                 var file = new FileInfo(path);
 
                 if (type == "Write")
