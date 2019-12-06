@@ -30,7 +30,7 @@ function show() {
 
 function SendToServerAboutUser(name, surname) {
     var xhr = new XMLHttpRequest();
-    var host = window.location.origin;
+    var host = window.location.origin + "/Shared" + "/UserReceiver";
     var requestBody = name + " " + surname;
     xhr.open("POST", host, true);
     xhr.send(requestBody);

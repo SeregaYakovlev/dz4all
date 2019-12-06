@@ -13,7 +13,7 @@ namespace WebSite
     {
         public static async Task Start(string user)
         {
-            var usersFilePath = Path.Combine(Pathes.pathToReports, "UsersCounter.json");
+            var usersFilePath = Path.Combine(Pathes.pathToReports, ConfigJson.UsersCounterFileName);
             bool fileExists = File.Exists(usersFilePath);
             if (fileExists) await AnalizeJson(user, usersFilePath);
             else

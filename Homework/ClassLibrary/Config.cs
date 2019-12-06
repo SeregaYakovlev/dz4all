@@ -41,7 +41,9 @@ namespace ClassLibrary
         public string Seq { get; set; }
         public string serverFileName { get; set; }
         public string diffsFileName { get; set; }
+        public string UsersCounterFileName { get; set; }
         public string JavaScriptErrorsFileName { get; set; }
+        public string AuthorizationCookieFileName { get; set; }
         public DateTimesFormats DateTimesFormats { get; set; }
         public Pathes Pathes { get; set; }
         public WebServer WebServer { get; set; }
@@ -71,6 +73,7 @@ namespace ClassLibrary
 
     public class Pathes
     {
+        public string pathToWorkDirectory { get; set; }
         public string pathToDataDirectory { get; set; }
         public string pathToAuthorizationDataDirectory { get; set; }
         public string pathToReports { get; set; }

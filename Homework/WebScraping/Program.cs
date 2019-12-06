@@ -18,7 +18,7 @@ namespace WebScraping
         private static Cookie cookie;
         private static async System.Threading.Tasks.Task Main()
         {
-            string pathToCookieFile = Path.Combine(Pathes.pathToAuthorizationDataDirectory, "AuthorizationCookie.json");
+            string pathToCookieFile = Path.Combine(Pathes.pathToAuthorizationDataDirectory, ConfigJson.AuthorizationCookieFileName);
             ConfigureLogger();
             await InstallBrowserAsync();
 

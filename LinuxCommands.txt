@@ -1,0 +1,17 @@
+﻿sudo - запуск команды под админом
+
+mkdir <directory name> - создать новую папку
+pwd - в какой папке я сейчас
+ls - вывести список файлов и папок в текущей папке.
+rm -r <file/directory name> - удалить
+cp -r - скопировать папку с всем тем, что внутри
+
+grep CRON /var/log/syslog - прочитать лог кронтаба
+
+To cut Ctrl + Shift + X.
+To copy Ctrl + Shift + C.
+To paste Ctrl + Shift + V.
+
+killall <the process name> - убить процесс.
+htop - диспетчер задач linux
+clear - очистка экрана.

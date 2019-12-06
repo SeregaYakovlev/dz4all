@@ -13,15 +13,5 @@ namespace WebSite.Pages
         {
 
         }
-        public async Task OnPost()
-        {
-            var body = Request.Body;
-            using (var reader = new StreamReader(body))
-            {
-                var bodyStr = await reader.ReadToEndAsync();
-                await UsersCounter.Start(bodyStr);
-                Log.Information($"User: {bodyStr} {DateTime.Now}");
-            }
-        }
     }
 }
