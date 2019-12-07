@@ -15,7 +15,6 @@ namespace WebSiteController
         {
             await ConfigureLogger();
             int procId = GetWebSiteProcessId();
-            Log.Information($"ID: {procId}");
             Process WebSiteProc = null;
             try
             {
@@ -28,6 +27,7 @@ namespace WebSiteController
 
             if (WebSiteProc != null)
             {
+                Log.Information($"ID: {procId}");
                 Log.Information("WebSite is working");
                 Log.CloseAndFlush();
             }
@@ -35,7 +35,6 @@ namespace WebSiteController
             {
                 Log.Information("Restarting the WebSite");
                 var command = $@"cd {Pathes.pathToWorkDirectory}; ";
-                command += @"killall dotnet ./WebSite/WebSite.dll; ";
                 command += @"dotnet ./WebSite/WebSite.dll; ";
                 Log.CloseAndFlush();
                 await ExecuteCommand(command);
