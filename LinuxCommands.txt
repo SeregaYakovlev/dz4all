@@ -5,8 +5,10 @@ pwd - в какой папке я сейчас
 ls - вывести список файлов и папок в текущей папке.
 rm -r <file/directory name> - удалить
 cp -r - скопировать папку с всем тем, что внутри
+sudo nano <fileName> - текстовый редактор.
 
 grep CRON /var/log/syslog - прочитать лог кронтаба
+crontab -e - редактировать кронтаб
 
 To cut Ctrl + Shift + X.
 To copy Ctrl + Shift + C.

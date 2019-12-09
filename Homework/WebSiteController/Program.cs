@@ -27,7 +27,6 @@ namespace WebSiteController
 
             if (WebSiteProc != null)
             {
-                Log.Information($"ID: {procId}");
                 Log.Information("WebSite is working");
                 Log.CloseAndFlush();
             }

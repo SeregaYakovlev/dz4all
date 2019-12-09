@@ -17,6 +17,8 @@ Set crontab for WebScraping: */15 8-22 * * * cd /root/ServerLinux && dotnet ./We
 Connect to hosting: ssh 195.133.146.191 -l root -p 22
 
 Update a pfx certificate: openssl pkcs12 -inkey privkey.pem -in fullchain.pem -export -out certificate.pfx
+Password is "secret".
+Create new certificate: sudo certbot certonly --standalone
 
 Check Internet speed:
 

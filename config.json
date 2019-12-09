@@ -30,9 +30,7 @@
       "HTTPS_Port": 443,
       "WebRoot": "//root//ServerLinux//WebSite//wwwroot",
       "HTTPS": {
-        "Certificate": "//etc//letsencrypt//live//dz4all.ru//fullchain.pem",
-        "PrivateKey": "//etc//letsencrypt//live//dz4all.ru//fullchain.pem",
-        "PathForPfxFile": "//etc//letsencrypt//live//dz4all.ru//certificate.pfx"
+        "PathForPfxFile": "//etc//letsencrypt//live//dz4all.ru-0001//certificate.pfx"
       }
     }
   }

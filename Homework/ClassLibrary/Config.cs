@@ -59,8 +59,6 @@ namespace ClassLibrary
 
     public class HTTPS
     {
-        public string Certificate { get; set; }
-        public string PrivateKey { get; set; }
         public string PathForPfxFile { get; set; }
     }
 
