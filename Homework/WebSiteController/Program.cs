@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Diagnostics;
@@ -11,33 +12,56 @@ namespace WebSiteController
 {
     class Program
     {
+        private static string WebSiteProcessDataFileName = "WebSiteProcessData.json";
+        private static string pathToWorkDirectory = @"/root/ServerLinux";
+        private static string ProcessID = "ID";
+        private static string SystemRestartTime = "SysRestTime";
         static async Task Main()
         {
             await ConfigureLogger();
-            int procId = GetWebSiteProcessId();
-            Process WebSiteProc = null;
-            try
+            var procData = GetWebSiteProcessData();
+            /* Если данных к процессу нет(за исключением случая специального удаления), 
+             * или они от прошлого сеанса работы системы,
+             * то ясно, что сайт не работает.*/
+            if (procData == null)
             {
-                if (procId != -1) WebSiteProc = Process.GetProcessById(procId);
-            }
-            catch (ArgumentException err) when (err.Message.IndexOf($"{procId} is not running") > -1)
-            {
-                DeleteFileProcessId();
-            }
-
-            if (WebSiteProc != null)
-            {
-                Log.Information("WebSite is working");
-                Log.CloseAndFlush();
+                await RestartWebSite();
+                return;
             }
             else
             {
-                Log.Information("Restarting the WebSite");
-                var command = $@"cd {Pathes.pathToWorkDirectory}; ";
-                command += @"dotnet ./WebSite/WebSite.dll; ";
-                Log.CloseAndFlush();
-                await ExecuteCommand(command);
+                string lastSysRestartTime = procData[SystemRestartTime].ToString();
+                string currentSysRestartTime = GetLastSystemRestartTime().ToString();
+                if (lastSysRestartTime != currentSysRestartTime)
+                {
+                    DeleteWebSiteProcessDataFile();
+                    await RestartWebSite();
+                    return;
+                };
             }
+
+            int procId = Convert.ToInt32(procData[ProcessID]);
+            try
+            {
+                Process.GetProcessById(procId);
+                Log.Information("WebSite is working");
+                Log.CloseAndFlush();
+            }
+            catch (ArgumentException err) when (err.Message.IndexOf($"{procId} is not running") > -1)
+            {
+                // То есть сайт упал, удаляем файл и запускаем снова.
+                DeleteWebSiteProcessDataFile();
+                await RestartWebSite();
+            }
+        }
+
+        private static async Task RestartWebSite()
+        {
+            Log.Information("Restarting the WebSite");
+            var command = $@"cd {pathToWorkDirectory}; ";
+            command += @"dotnet ./WebSite/WebSite.dll; ";
+            Log.CloseAndFlush();
+            await ExecuteCommand(command);
         }
 
         private static async Task ExecuteCommand(string command)
@@ -49,7 +73,8 @@ namespace WebSiteController
                 proc.StartInfo.UseShellExecute = false;
                 proc.Start();
                 var procId = proc.Id.ToString();
-                await WriteProcessIdToFile(procId);
+                var sysRestartTime = GetLastSystemRestartTime();
+                await WriteProcessDataToFile(procId, sysRestartTime);
             }
         }
         private static async Task ConfigureLogger()
@@ -61,39 +86,49 @@ namespace WebSiteController
             Log.Logger = logConfig.CreateLogger();
         }
 
-        private static async Task WriteProcessIdToFile(string id)
+        private static async Task WriteProcessDataToFile(string id, DateTime systemRestartTime)
         {
+            var json = new JObject();
+            json.Add(ProcessID, id);
+            json.Add(SystemRestartTime, systemRestartTime);
+            string jsonStr = JsonConvert.SerializeObject(json);
             var fm = new ClassLibrary.File_Manager();
-            var path = Path.Combine(Pathes.pathToWorkDirectory, "WebSiteProcessId.txt");
-            fm.OpenFile(path, "Write", id);
+            var path = Path.Combine(pathToWorkDirectory, WebSiteProcessDataFileName);
+            fm.OpenFile(path, "Write", jsonStr);
         }
 
-        private static int GetWebSiteProcessId()
+        private static JObject GetWebSiteProcessData()
         {
-            var directoryFiles = new DirectoryInfo(Pathes.pathToWorkDirectory).GetFiles();
+            var directoryFiles = new DirectoryInfo(pathToWorkDirectory).GetFiles();
             var file = directoryFiles
-            .Where(file => file.Name == "WebSiteProcessId.txt")
+            .Where(file => file.Name == WebSiteProcessDataFileName)
             .SingleOrDefault();
-            if (file == null) return -1;
+            if (file == null) return null;
 
             var fm = new ClassLibrary.File_Manager();
-            var path = Path.Combine(Pathes.pathToWorkDirectory, "WebSiteProcessId.txt");
-            string idStr = fm.OpenFile(path, "Read", null).fileData;
-            int id = Convert.ToInt32(idStr);
-            return id;
+            var path = Path.Combine(pathToWorkDirectory, WebSiteProcessDataFileName);
+            string jsonStr = fm.OpenFile(path, "Read", null).fileData;
+            var jobj = JObject.Parse(jsonStr);
+            return jobj;
         }
 
-        private static void DeleteFileProcessId()
+        private static void DeleteWebSiteProcessDataFile()
         {
-            var directoryFiles = new DirectoryInfo(Pathes.pathToWorkDirectory).GetFiles();
+            var directoryFiles = new DirectoryInfo(pathToWorkDirectory).GetFiles();
             var file = directoryFiles
-            .Where(file => file.Name == "WebSiteProcessId.txt")
+            .Where(file => file.Name == WebSiteProcessDataFileName)
             .SingleOrDefault();
 
             if (file != null)
             {
                 File.Delete(file.FullName);
             }
+        }
+        private static DateTime GetLastSystemRestartTime()
+        {
+            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            Console.WriteLine(DateTime.Now.Subtract(t));
+            return DateTime.Now.Subtract(t);
         }
     }
 }

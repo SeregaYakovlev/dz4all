@@ -71,7 +71,6 @@ namespace ClassLibrary
 
     public class Pathes
     {
-        public string pathToWorkDirectory { get; set; }
         public string pathToDataDirectory { get; set; }
         public string pathToAuthorizationDataDirectory { get; set; }
         public string pathToReports { get; set; }
