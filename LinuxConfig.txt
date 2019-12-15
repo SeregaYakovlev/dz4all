@@ -1,5 +1,11 @@
-Linux config:
+﻿Linux config:
 
+Set swap: https://linuxize.com/post/create-a-linux-swap-file/
+
+{Не обязательно:
+	Shutdown the oom killer: echo vm.oom-kill = 0 >>/etc/sysctl.conf
+	Enable the oom killer: echo vm.oom-kill = 1 >>/etc/sysctl.conf
+}
 Установить dotnet, certbot
 
 Letencrypt в //etc

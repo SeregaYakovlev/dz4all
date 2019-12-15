@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClassLibrary", "ClassLibrar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSiteController", "WebSiteController\WebSiteController.csproj", "{539F1A6B-3EB6-492A-8022-C6E2C1EE582E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSite", "WebSite\WebSite.csproj", "{F276EC50-27CA-4EB7-BEFF-C23B436430AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSite", "WebSite\WebSite.csproj", "{F276EC50-27CA-4EB7-BEFF-C23B436430AE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemMonitoring", "SystemMonitoring\SystemMonitoring.csproj", "{9C8ACE05-8D1C-44E7-A0CA-E4D31B154BD4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{F276EC50-27CA-4EB7-BEFF-C23B436430AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F276EC50-27CA-4EB7-BEFF-C23B436430AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F276EC50-27CA-4EB7-BEFF-C23B436430AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C8ACE05-8D1C-44E7-A0CA-E4D31B154BD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C8ACE05-8D1C-44E7-A0CA-E4D31B154BD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C8ACE05-8D1C-44E7-A0CA-E4D31B154BD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C8ACE05-8D1C-44E7-A0CA-E4D31B154BD4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

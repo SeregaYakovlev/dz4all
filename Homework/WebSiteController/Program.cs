@@ -12,10 +12,11 @@ namespace WebSiteController
 {
     class Program
     {
-        private static string WebSiteProcessDataFileName = "WebSiteProcessData.json";
         private static string pathToWorkDirectory = @"/root/ServerLinux";
+        private static string pathToWebSiteProcessDataFile = Path.Combine(pathToWorkDirectory, "WebSiteProcessData", "WebSiteProcessData.json");
         private static string ProcessID = "ID";
         private static string SystemRestartTime = "SysRestTime";
+        private static string pathToUptimeFile = @"/proc/uptime";
         static async Task Main()
         {
             await ConfigureLogger();
@@ -93,20 +94,15 @@ namespace WebSiteController
             json.Add(SystemRestartTime, systemRestartTime);
             string jsonStr = JsonConvert.SerializeObject(json);
             var fm = new ClassLibrary.File_Manager();
-            var path = Path.Combine(pathToWorkDirectory, WebSiteProcessDataFileName);
+            var path = pathToWebSiteProcessDataFile;
             fm.OpenFile(path, "Write", jsonStr);
         }
 
         private static JObject GetWebSiteProcessData()
         {
-            var directoryFiles = new DirectoryInfo(pathToWorkDirectory).GetFiles();
-            var file = directoryFiles
-            .Where(file => file.Name == WebSiteProcessDataFileName)
-            .SingleOrDefault();
-            if (file == null) return null;
-
+            if (!File.Exists(pathToWebSiteProcessDataFile)) return null;
             var fm = new ClassLibrary.File_Manager();
-            var path = Path.Combine(pathToWorkDirectory, WebSiteProcessDataFileName);
+            var path = pathToWebSiteProcessDataFile;
             string jsonStr = fm.OpenFile(path, "Read", null).fileData;
             var jobj = JObject.Parse(jsonStr);
             return jobj;
@@ -114,11 +110,7 @@ namespace WebSiteController
 
         private static void DeleteWebSiteProcessDataFile()
         {
-            var directoryFiles = new DirectoryInfo(pathToWorkDirectory).GetFiles();
-            var file = directoryFiles
-            .Where(file => file.Name == WebSiteProcessDataFileName)
-            .SingleOrDefault();
-
+            var file = new FileInfo(pathToWebSiteProcessDataFile);
             if (file != null)
             {
                 File.Delete(file.FullName);
@@ -126,8 +118,9 @@ namespace WebSiteController
         }
         private static DateTime GetLastSystemRestartTime()
         {
-            var t = TimeSpan.FromMilliseconds(Environment.TickCount64);
-            Console.WriteLine(DateTime.Now.Subtract(t));
+            string uptimeFile = new ClassLibrary.File_Manager().OpenFile(pathToUptimeFile, "Read", null).fileData;
+            double uptime = Convert.ToDouble(uptimeFile.Split(" ")[0]);
+            var t = TimeSpan.FromSeconds(uptime);
             return DateTime.Now.Subtract(t);
         }
     }
